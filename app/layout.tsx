@@ -1,5 +1,5 @@
 import type React from "react"
-import { Mona_Sans as FontSans } from "next/font/google"
+//import { Noto_Sans_Ogham as FontSans } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/layout/navbar"
 import Footer from "@/components/layout/footer"
@@ -7,10 +7,10 @@ import { CartProvider } from "@/components/providers/cart-provider"
 import { cn } from "@/lib/utils"
 import "@/app/globals.css"
 
-const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-})
+// const fontSans = FontSans({
+//   subsets: ["latin"],
+//   variable: "--font-sans",
+// })
 
 export const metadata = {
   title: "Zayka - Delicious Food Delivered",
@@ -25,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
+      <body className={cn("min-h-screen bg-background font-sans antialiased",/*  fontSans.variable */)}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <CartProvider>
             <div className="relative flex min-h-screen flex-col">
