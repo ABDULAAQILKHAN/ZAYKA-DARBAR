@@ -1,5 +1,5 @@
 import type React from "react"
-import { Mona_Sans as FontSans } from "next/font/google"
+import { Inter as FontSans } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/layout/navbar"
 import Footer from "@/components/layout/footer"
