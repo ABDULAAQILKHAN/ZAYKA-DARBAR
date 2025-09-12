@@ -15,18 +15,18 @@ export default function Footer() {
               crafted dishes.
             </p>
             <div className="mt-6 flex space-x-4">
-              <Link href="#" className="text-muted-foreground hover:text-zayka-600 dark:hover:text-zayka-400">
+              {/* <Link href="#" className="text-muted-foreground hover:text-zayka-600 dark:hover:text-zayka-400">
                 <Facebook className="h-5 w-5" />
                 <span className="sr-only">Facebook</span>
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-zayka-600 dark:hover:text-zayka-400">
+              </Link> */}
+              <Link href="https://www.instagram.com/zayka__darbar/" className="text-muted-foreground hover:text-zayka-600 dark:hover:text-zayka-400">
                 <Instagram className="h-5 w-5" />
                 <span className="sr-only">Instagram</span>
               </Link>
-              <Link href="#" className="text-muted-foreground hover:text-zayka-600 dark:hover:text-zayka-400">
+              {/* <Link href="#" className="text-muted-foreground hover:text-zayka-600 dark:hover:text-zayka-400">
                 <Twitter className="h-5 w-5" />
                 <span className="sr-only">Twitter</span>
-              </Link>
+              </Link> */}
             </div>
           </div>
 
@@ -46,14 +46,14 @@ export default function Footer() {
                   Menu
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   href="/about"
                   className="text-sm text-muted-foreground hover:text-zayka-600 dark:hover:text-zayka-400"
                 >
                   About Us
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link
                   href="/contact"
@@ -70,15 +70,15 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex justify-between">
                 <span>Monday - Friday</span>
-                <span>10:00 AM - 10:00 PM</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Saturday</span>
                 <span>11:00 AM - 11:00 PM</span>
               </li>
               <li className="flex justify-between">
+                <span>Saturday</span>
+                <span>11:00 AM - 12:00 AM</span>
+              </li>
+              <li className="flex justify-between">
                 <span>Sunday</span>
-                <span>11:00 AM - 10:00 PM</span>
+                <span>11:00 AM - 12:00 AM</span>
               </li>
             </ul>
           </div>
@@ -86,8 +86,8 @@ export default function Footer() {
           <div>
             <h3 className="font-medium text-lg mb-4">Contact Us</h3>
             <address className="not-italic text-sm text-muted-foreground space-y-2">
-              <p>123 Food Street, Cuisine City</p>
-              <p>Phone: (123) 456-7890</p>
+              <p>zayka darbar - choupal sagar/ agar road / ujjain</p>
+              <p>Phone: (+91) 70009 69701</p>
               <p>Email: info@zayka.com</p>
             </address>
           </div>

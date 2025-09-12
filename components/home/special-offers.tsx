@@ -12,21 +12,21 @@ const offers = [
     id: 1,
     title: "30% OFF on First Order",
     description: "Use code WELCOME30 at checkout",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "/offer.png?height=300&width=300",
     link: "/menu",
   },
   {
     id: 2,
     title: "Family Combo Deal",
     description: "4 main courses, 2 sides, and drinks at 20% off",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "/family combo.png?height=300&width=300",
     link: "/menu",
   },
   {
     id: 3,
     title: "Free Delivery",
     description: "On orders above $30",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "/free delivery.png?height=300&width=300",
     link: "/menu",
   },
 ]
@@ -73,8 +73,8 @@ export default function SpecialOffers() {
           <motion.div key={offer.id} variants={item}>
             <Link href={offer.link}>
               <Card className="overflow-hidden h-full transition-all duration-200 hover:shadow-md">
-                <div className="relative h-48">
-                  <Image src={offer.image || "/placeholder.svg"} alt={offer.title} fill className="object-cover" />
+                <div className="relative h-[400px]">
+                  <Image src={offer.image || "/placeholder.svg"} alt={offer.title} fill className="object-fill" />
                 </div>
                 <CardContent className="p-6">
                   <h3 className="text-xl font-bold mb-2">{offer.title}</h3>
