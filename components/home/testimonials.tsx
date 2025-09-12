@@ -9,28 +9,28 @@ import { Card, CardContent } from "@/components/ui/card"
 const testimonials = [
   {
     id: 1,
-    name: "Sarah Johnson",
+    name: "Aaqil Khan",
     avatar: "/placeholder.svg?height=100&width=100",
     rating: 5,
     text: "The food at Zayka is absolutely amazing! The flavors are authentic and the service is excellent. I highly recommend the Butter Chicken.",
   },
   {
     id: 2,
-    name: "Michael Chen",
+    name: "Affan khan",
     avatar: "/placeholder.svg?height=100&width=100",
     rating: 4,
     text: "Great ambiance and delicious food. The Paneer Tikka Masala is to die for! Will definitely be coming back.",
   },
   {
     id: 3,
-    name: "Emily Rodriguez",
+    name: "Zoya khan",
     avatar: "/placeholder.svg?height=100&width=100",
     rating: 5,
     text: "Best Indian restaurant in town! The Chicken Biryani is perfectly spiced and the naan bread is so soft and fluffy.",
   },
   {
     id: 4,
-    name: "David Kim",
+    name: "Hina afreen khan",
     avatar: "/placeholder.svg?height=100&width=100",
     rating: 4,
     text: "Excellent food and prompt delivery. The online ordering system is very convenient and user-friendly.",

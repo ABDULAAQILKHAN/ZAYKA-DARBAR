@@ -9,37 +9,37 @@ const categories = [
   {
     id: "starters",
     name: "Starters",
-    image: "/placeholder.svg?height=200&width=200",
+    image: "/nonveg starter.png?height=200&width=200",
     count: 12,
   },
   {
     id: "main-course",
     name: "Main Course",
-    image: "/placeholder.svg?height=200&width=200",
+    image: "/main course.png?height=200&width=200",
     count: 24,
   },
   {
     id: "chicken",
     name: "Chicken",
-    image: "/placeholder.svg?height=200&width=200",
+    image: "/chicken.png?height=200&width=200",
     count: 18,
   },
   {
     id: "vegetarian",
     name: "Vegetarian",
-    image: "/placeholder.svg?height=200&width=200",
+    image: "/vegitarian.png?height=200&width=200",
     count: 16,
   },
   {
     id: "breads",
     name: "Breads",
-    image: "/placeholder.svg?height=200&width=200",
+    image: "/breads.png?height=200&width=200",
     count: 8,
   },
   {
     id: "desserts",
     name: "Desserts",
-    image: "/placeholder.svg?height=200&width=200",
+    image: "/desserts.png?height=200&width=200",
     count: 10,
   },
 ]

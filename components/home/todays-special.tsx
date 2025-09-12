@@ -93,14 +93,14 @@ export default function TodaysSpecial() {
             <Card className="overflow-hidden h-full transition-all duration-200 hover:shadow-md">
               <div className="relative h-48">
                 <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-                <Badge className="absolute top-2 right-2" variant={item.isVeg ? "outline" : "default"}>
+                <Badge className="absolute top-2 right-2" variant={item.isVeg ? "green" : "default"}>
                   {item.isVeg ? "Veg" : "Non-Veg"}
                 </Badge>
               </div>
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-lg font-bold">{item.name}</h3>
-                  <span className="font-medium text-zayka-600 dark:text-zayka-400">${item.price.toFixed(2)}</span>
+                  <span className="font-medium text-zayka-600 dark:text-zayka-400">₹{item.price.toFixed(2)}</span>
                 </div>
                 <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
                 <Badge variant="secondary" className="mt-2">

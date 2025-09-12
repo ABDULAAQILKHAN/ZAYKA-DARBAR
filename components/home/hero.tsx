@@ -10,7 +10,7 @@ export default function Hero() {
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 z-0">
         <Image
-          src="/placeholder.svg?height=800&width=1600"
+          src="heroBackground.jpg?height=800&width=1600"
           alt="Hero background"
           fill
           className="object-cover brightness-[0.4]"
@@ -37,9 +37,9 @@ export default function Hero() {
               <Button size="lg" asChild>
                 <Link href="/menu">Explore Menu</Link>
               </Button>
-              <Button size="lg" variant="outline" className="bg-transparent text-white border-white hover:bg-white/10">
+              {/* <Button size="lg" variant="outline" className="bg-transparent text-white border-white hover:bg-white/10">
                 <Link href="/reservation">Book a Table</Link>
-              </Button>
+              </Button> */}
             </div>
           </motion.div>
 
@@ -50,7 +50,7 @@ export default function Hero() {
             className="hidden md:block"
           >
             <div className="relative h-[400px] w-[400px]">
-              <Image src="/placeholder.svg?height=400&width=400" alt="Featured dish" fill className="object-contain" />
+              <Image src="https://www.licious.in/blog/wp-content/uploads/2022/06/chicken-hyderabadi-biryani-01.jpg?height=400&width=400" alt="Featured dish" fill className="object-contain rounded-xl" />
             </div>
           </motion.div>
         </div>
