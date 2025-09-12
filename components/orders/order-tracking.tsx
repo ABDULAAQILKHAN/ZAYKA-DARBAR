@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { formatOrderDate, formatCurrency } from "@/lib/utils"
 
 interface Order {
   id: string
@@ -158,11 +159,14 @@ function OrderCard({ order, showProgress = false }: OrderCardProps) {
             <div>
               <CardTitle className="text-lg">{order.id}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {new Date(order.orderDate).toLocaleDateString()} at {new Date(order.orderDate).toLocaleTimeString()}
+                {(() => {
+                  const formatted = formatOrderDate(order.orderDate)
+                  return `${formatted.date} at ${formatted.time}`
+                })()}
               </p>
             </div>
             <div className="text-right">
-              <p className="font-semibold text-lg">${order.total.toFixed(2)}</p>
+              <p className="font-semibold text-lg">{formatCurrency(order.total)}</p>
               {order.estimatedTime && <p className="text-sm text-muted-foreground">ETA: {order.estimatedTime}</p>}
             </div>
           </div>
@@ -177,7 +181,7 @@ function OrderCard({ order, showProgress = false }: OrderCardProps) {
                   <span>
                     {item.quantity}x {item.name}
                   </span>
-                  <span>${(item.price * item.quantity).toFixed(2)}</span>
+                  <span>{formatCurrency(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
