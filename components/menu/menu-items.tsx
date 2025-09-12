@@ -25,11 +25,17 @@ const item = {
   show: { opacity: 1, y: 0 },
 }
 
-export default function MenuItems() {
+function MenuItemsContent() {
   const searchParams = useSearchParams()
-  const category = searchParams.get("category") || "all"
+  const [category, setCategory] = useState("all")
   const [menuItems, setMenuItems] = useState<any[]>([])
   const { addItem } = useCart()
+
+  useEffect(() => {
+    // Only access search params after component mounts
+    const categoryParam = searchParams.get("category") || "all"
+    setCategory(categoryParam)
+  }, [searchParams])
 
   useEffect(() => {
     const items = getMenuItems(category)
@@ -94,4 +100,18 @@ export default function MenuItems() {
       )}
     </div>
   )
+}
+
+export default function MenuItems() {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return <div className="flex items-center justify-center py-8">Loading menu...</div>
+  }
+
+  return <MenuItemsContent />
 }
