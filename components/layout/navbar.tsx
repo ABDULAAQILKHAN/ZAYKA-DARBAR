@@ -4,25 +4,82 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, ShoppingCart, User } from "lucide-react"
+import { Menu, X, ShoppingCart, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
 import { useCart } from "@/hooks/use-cart"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useAuth } from "../providers/auth-provider"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import toast from "react-hot-toast"
 
-const navItems = [
-  { name: "Home", href: "/" },
-  { name: "Menu", href: "/menu" },
-  { name: "Orders", href: "/orders" },
-  { name: "Admin", href: "/admin" },
-  { name: "Contact", href: "/contact" },
-]
+const getNavItems = (userRole?: string, isAuthenticated?: boolean) => {
+  const baseItems = [
+    { name: "Home", href: "/" },
+    { name: "Menu", href: "/menu" },
+    { name: "Contact", href: "/contact" }
+  ]
+
+  // Only show Orders if user is logged in as customer
+  if (isAuthenticated && userRole === 'customer') {
+    baseItems.push({ name: "My orders", href: "/orders" })
+  }
+
+  // Only show Admin if user is admin (hidden for now as requested)
+  if (userRole === 'admin') {
+    baseItems.length = 0;
+    baseItems.push({ name: "Admin", href: "/admin" })
+  }
+
+  return baseItems
+}
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const pathname = usePathname()
   const { items } = useCart()
+  const supabase = createClient()
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+  const  navItems = getNavItems(profile?.role, !!user)
+  const data = useAuth();
+  
+  useEffect(() => {
+    const fetchUser = async () => {
+      if(data?.error){
+        console.error('Error fetching user in Navbar:', data.error)
+        toast.error('Error fetching user data')
+        setError(data.error)
+        return
+      }
+      try{
+        setIsLoading(true)
+        setUser(data?.user)
+        setProfile(data.profile)
+        //const { data, error } = await supabase.auth.getUser()
+        // setProfile(data.user.user_metadata)
+      }catch{
+        toast.error('An unexpected error occurred');
+        setError('An unexpected error occurred')
+      }finally{
+        setIsLoading(false)
+      }
+      }
+    fetchUser()
+  }, [data])
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,6 +101,18 @@ export default function Navbar() {
       document.body.style.overflow = "auto"
     }
   }, [isOpen])
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      setUser(null)
+      setProfile(null)
+      router.push("/auth/login")
+      toast.success("Logged out successfully")
+    } catch (error) {
+      toast.error("Error logging out")
+    }
+  }
 
   return (
     <header
@@ -82,30 +151,79 @@ export default function Navbar() {
 
           <div className="flex items-center gap-4">
             <ModeToggle />
-
-            <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                {items.length > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-zayka-600 text-xs text-white">
-                    {items.length}
-                  </span>
-                )}
-              </Button>
-            </Link>
-
-            <div className="hidden md:block">
-              <Link href="/auth/login">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <User className="h-4 w-4" />
-                  Login
+            {profile && profile?.role === 'customer' && (
+                <Link href="/cart">
+                <Button variant="ghost" size="icon" className="relative">
+                  <ShoppingCart className="h-5 w-5" />
+                  {items.length > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-zayka-600 text-xs text-white">
+                      {items.length}
+                    </span>
+                  )}
                 </Button>
               </Link>
-            </div>
+            )}
 
-            <Button variant="outline" size="sm" className="hidden md:inline-flex">
-              <Link href="/auth/signup">Sign Up</Link>
-            </Button>
+            {/* Authentication Section */}
+            {isLoading ? (
+              <div className="hidden md:block">
+                <Button variant="ghost" size="sm" disabled>
+                  Loading...
+                </Button>
+              </div>
+            ) : user != null ? (
+              <div className="hidden md:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <User className="h-4 w-4" />
+                      {profile?.first_name[0] +  profile?.last_name[0]}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem disabled>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">
+                          {profile?.full_name || `${profile?.first_name} ${profile?.last_name}` || 'User'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {profile && profile?.role === 'customer' &&  <DropdownMenuItem asChild>
+                      <Link href="/orders" className="cursor-pointer">
+                        My Orders
+                      </Link>
+                    </DropdownMenuItem>}
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="cursor-pointer">
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              <>
+                <div className="hidden md:block">
+                  <Link href="/auth/login">
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <User className="h-4 w-4" />
+                      Login
+                    </Button>
+                  </Link>
+                </div>
+
+                <Button variant="outline" size="sm" className="hidden md:inline-flex">
+                  <Link href="/auth/signup">Sign Up</Link>
+                </Button>
+              </>
+            )}
 
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsOpen(true)}>
               <Menu className="h-5 w-5" />
@@ -152,14 +270,47 @@ export default function Navbar() {
               </nav>
 
               <div className="mt-auto mb-8 flex flex-col gap-4">
-                <Link href="/auth/login" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full">
-                    Login
-                  </Button>
-                </Link>
-                <Link href="/auth/signup" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full">Sign Up</Button>
-                </Link>
+                {user ? (
+                  <>
+                    <div className="text-center">
+                      <p className="text-sm font-medium">
+                        {profile?.full_name || `${profile?.first_name} ${profile?.last_name}` || 'User'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                    <Link href="/orders" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        My Orders
+                      </Button>
+                    </Link>
+                    <Link href="/profile" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        Profile
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="destructive" 
+                      className="w-full" 
+                      onClick={() => {
+                        handleSignOut()
+                        setIsOpen(false)
+                      }}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/auth/login" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        Login
+                      </Button>
+                    </Link>
+                    <Link href="/auth/signup" onClick={() => setIsOpen(false)}>
+                      <Button className="w-full">Sign Up</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

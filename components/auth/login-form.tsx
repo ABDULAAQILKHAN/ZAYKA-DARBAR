@@ -11,24 +11,117 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { createClient } from "@/lib/supabase/client"
+// import { useAuth } from "@/components/providers/auth-provider"
+import toast from "react-hot-toast"
+
+interface FormData {
+  email: string
+  password: string
+}
+
+interface ValidationErrors {
+  email?: string
+  password?: string
+}
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [formData, setFormData] = useState<FormData>({
+    email: "",
+    password: "",
+  })
+  const [errors, setErrors] = useState<ValidationErrors>({})
   const router = useRouter()
+  // const { refreshProfile } = useAuth()
+  const supabase = createClient()
+
+  // Email regex pattern
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  const validateField = (name: keyof FormData, value: string): string | undefined => {
+    switch (name) {
+      case "email":
+        if (!value.trim()) return "Email is required"
+        return !emailRegex.test(value) ? "Please enter a valid email address" : undefined
+      case "password":
+        if (!value) return "Password is required"
+        return value.length < 6 ? "Password must be at least 6 characters" : undefined
+      default:
+        return undefined
+    }
+  }
+
+  const handleInputChange = (name: keyof FormData, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }))
+    }
+  }
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {}
+    
+    Object.keys(formData).forEach(key => {
+      const fieldName = key as keyof FormData
+      const error = validateField(fieldName, formData[fieldName])
+      if (error) {
+        newErrors[fieldName] = error
+      }
+    })
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    if (!validateForm()) {
+      toast.error("Please fix the errors below")
+      return
+    }
+    
     setIsLoading(true)
 
-    // Simulate login
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      })
 
-    // Show success message (you can replace this with a custom notification)
-    alert("Login successful! Welcome back to Zayka!")
+      if (error) {
+        console.error("Login error:", error)
+        toast.error(error.message || "Failed to login")
+        return
+      }
 
-    setIsLoading(false)
-    router.push("/")
+      if (data.user) {
+        toast.success("Login successful! Welcome back to Zayka!")
+
+        const userRole = data.user.user_metadata?.role || 'customer'
+        
+        // Conditional routing based on role
+        if (userRole === 'customer') {
+          router.push("/menu")
+        } else if (userRole === 'admin') {
+          router.push("/admin")
+        } else if (userRole === 'staff') {
+          router.push("/admin/orders")
+        } else {
+          // Default fallback
+          router.push("/")
+        }
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error)
+      toast.error("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -44,7 +137,18 @@ export default function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your.email@example.com" required />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="your.email@example.com" 
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                className={errors.email ? "border-red-500" : ""}
+                required 
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -57,7 +161,15 @@ export default function LoginForm() {
                 </Link>
               </div>
               <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" required />
+                <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="••••••••" 
+                  value={formData.password}
+                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  className={errors.password ? "border-red-500" : ""}
+                  required 
+                />
                 <Button
                   type="button"
                   variant="ghost"
@@ -73,6 +185,9 @@ export default function LoginForm() {
                   <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
                 </Button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-red-500">{errors.password}</p>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Logging in..." : "Login"}

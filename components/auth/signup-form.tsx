@@ -12,28 +12,138 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 // import { useToast } from "@/hooks/use-toast" // Removed useToast import
+import { createClient } from "@/lib/supabase/client"
+import toast from "react-hot-toast"
+interface FormData {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  password: string
+}
+
+interface ValidationErrors {
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+  password?: string
+}
 
 export default function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [formData, setFormData] = useState<FormData>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+  })
+  const [errors, setErrors] = useState<ValidationErrors>({})
   const router = useRouter()
-  // const { toast } = useToast() // Removed toast destructuring
+  const supabase = createClient()
+
+  // Email regex pattern
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  
+  // Password regex - at least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  
+  // Phone regex - basic US phone format
+  const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/
+
+  const validateField = (name: keyof FormData, value: string): string | undefined => {
+    switch (name) {
+      case "firstName":
+        return value.trim().length < 2 ? "First name must be at least 2 characters" : undefined
+      case "lastName":
+        return value.trim().length < 2 ? "Last name must be at least 2 characters" : undefined
+      case "email":
+        if (!value.trim()) return "Email is required"
+        return !emailRegex.test(value) ? "Please enter a valid email address" : undefined
+      case "phone":
+        if (!value.trim()) return "Phone number is required"
+        return !phoneRegex.test(value) ? "Please enter a valid phone number" : undefined
+      case "password":
+        if (!value) return "Password is required"
+        if (value.length < 8) return "Password must be at least 8 characters"
+        if (!passwordRegex.test(value)) {
+          return "Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character"
+        }
+        return undefined
+      default:
+        return undefined
+    }
+  }
+
+  const handleInputChange = (name: keyof FormData, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }))
+    }
+  }
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {}
+    
+    Object.keys(formData).forEach(key => {
+      const fieldName = key as keyof FormData
+      const error = validateField(fieldName, formData[fieldName])
+      if (error) {
+        newErrors[fieldName] = error
+      }
+    })
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    if (!validateForm()) {
+      toast.error("Please fix the errors below")
+      return
+    }
+    
     setIsLoading(true)
+    //const role = 'customer'
+    //const role = 'admin' 
+    const role = 'staff' 
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            phone: formData.phone,
+            full_name: `${formData.firstName} ${formData.lastName}`,
+            role,
+          },
+        },
+      })
 
-    // Simulate signup
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (error) {
+        console.error("Signup error:", error)
+        toast.error(error.message || "Failed to create account")
+        return
+      }
 
-    // toast({
-    //   title: "Account created",
-    //   description: "Welcome to Zayka! Your account has been created successfully.",
-    // })
-    alert("Account created! Welcome to Zayka!") // Replaced toast call with alert
-
-    setIsLoading(false)
-    router.push("/")
+      if (data.user) {
+        toast.success("Account created! Please check your email to verify your account.")
+        router.push("/auth/login")
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error)
+      toast.error("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -48,25 +158,75 @@ export default function SignupForm() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First name</Label>
-                <Input id="firstName" placeholder="John" required />
+                <Input 
+                  id="firstName" 
+                  placeholder="John" 
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  className={errors.firstName ? "border-red-500" : ""}
+                  required 
+                />
+                {errors.firstName && (
+                  <p className="text-sm text-red-500">{errors.firstName}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last name</Label>
-                <Input id="lastName" placeholder="Doe" required />
+                <Input 
+                  id="lastName" 
+                  placeholder="Doe" 
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  className={errors.lastName ? "border-red-500" : ""}
+                  required 
+                />
+                {errors.lastName && (
+                  <p className="text-sm text-red-500">{errors.lastName}</p>
+                )}
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your.email@example.com" required />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="your.email@example.com" 
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                className={errors.email ? "border-red-500" : ""}
+                required 
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone number</Label>
-              <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" required />
+              <Input 
+                id="phone" 
+                type="tel" 
+                placeholder="+1 (555) 123-4567" 
+                value={formData.phone}
+                onChange={(e) => handleInputChange("phone", e.target.value)}
+                className={errors.phone ? "border-red-500" : ""}
+                required 
+              />
+              {errors.phone && (
+                <p className="text-sm text-red-500">{errors.phone}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" required />
+                <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="••••••••" 
+                  value={formData.password}
+                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  className={errors.password ? "border-red-500" : ""}
+                  required 
+                />
                 <Button
                   type="button"
                   variant="ghost"
@@ -82,6 +242,12 @@ export default function SignupForm() {
                   <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
                 </Button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-red-500">{errors.password}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Password must be at least 8 characters with uppercase, lowercase, number, and special character
+              </p>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Create account"}
