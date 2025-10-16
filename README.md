@@ -1,96 +1,133 @@
-# Zayka Restaurant - Food Ordering Website
+zayka-darbar/
+<div align="center">
 
-A modern, responsive food ordering website built with Next.js, TypeScript, and Tailwind CSS.
+![Landing Preview](image.png)
 
-## Features
+# Zayka – Modern Restaurant & Food Ordering Platform
 
-- 🍽️ Beautiful landing page with restaurant branding
-- 📱 Responsive design for all devices
-- 🌙 Dark mode support
-- 🛒 Shopping cart functionality
-- 👨‍💼 Admin dashboard for menu management
-- 📦 Order tracking system
-- 🎨 Modern UI with Framer Motion animations
+Effortless ordering. Real‑time updates. Beautiful UI. Zayka is a full‑featured restaurant web application built with performance, accessibility, and developer experience in mind.
 
-## Installation
+<p>
+  <strong>Live ordering · Menu management · Cart & checkout · Auth · Dark mode</strong>
+</p>
 
-1. **Clone or download the project**
+</div>
 
-2. **Install dependencies:**
-   \`\`\`bash
+## ✨ Overview
+
+Zayka is a Next.js application that showcases a production‑style architecture for a restaurant ordering experience. It includes public browsing, authenticated user flows, an admin back‑office, live order tracking, and a modular design system built on Radix UI primitives and Tailwind CSS.
+
+
+## 🚀 Features
+
+- 🍽️ Dynamic menu browsing by category
+- 🛒 Persistent cart with summary + quantity controls
+- 💳 Checkout flow with order recap
+- 📦 Live order tracking UI
+- 👤 Authentication (login / signup / password reset)
+- 🧑‍💼 Admin dashboard (menu & live orders management)
+- 🌙 Theme toggle (light/dark) via `next-themes`
+- 🎨 Design system: buttons, dialogs, inputs, tabs, selects, etc.
+- 🧩 Modular component architecture (feature folders)
+- 🌀 Framer Motion animations & subtle transitions
+- 📱 Fully responsive layout
+- 🔐 Validation with `react-hook-form` + `zod`
+- 🔔 Toast & feedback system
+- 📊 Charts / analytics ready (Recharts placeholder)
+- 🧪 Typed utilities & providers for cart/auth state
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript, React 18 |
+| Styling | Tailwind CSS, Tailwind Merge, custom tokens |
+| UI Primitives | Radix UI suite (Dialog, Dropdown, Select, Tabs, etc.) |
+| Theming | `next-themes` dark/light mode |
+| Animations | Framer Motion, tailwindcss-animate |
+| Forms & Validation | React Hook Form + Zod resolvers |
+| State / Providers | Custom context providers (`auth-provider`, `cart-provider`) |
+| Data / Backend | Supabase client (`@supabase/supabase-js`, SSR helpers) |
+| Notifications | `react-hot-toast` / `sonner` |
+| Visualization | Recharts (analytics), Embla carousel |
+
+<!-- ## 📂 Project Structure
+
+```
+app/            # Route segments & layouts (Next.js App Router)
+components/     # Reusable & feature-specific UI components
+  ui/           # Design system primitives (Radix based)
+  admin/        # Admin dashboard pieces
+  auth/         # Auth forms (login/signup/reset)
+  layout/       # Navbar / Footer
+  menu/         # Menu browsing components
+  cart/         # Cart & summary components
+  checkout/     # Checkout form & order summary
+  orders/       # Order tracking components
+hooks/          # Custom hooks (e.g. use-cart)
+lib/            # Data, utils, Supabase client/server helpers
+public/         # Static assets & images
+styles/         # Global CSS & Tailwind base layers
+``` -->
+
+<!-- ## 🔐 Authentication Flow
+
+Supabase is used for user management and session handling (client + server helpers). Providers wrap the app to supply auth and cart context to all child components. -->
+<!-- 
+## 🛒 Cart & Orders
+
+The cart state lives in a context provider and exposes actions via the `use-cart` hook. Order creation & tracking UI demonstrates how status changes can be rendered in real time. -->
+
+## 🧱 UI System
+
+Components are composed from Radix primitives with Tailwind utility classes, `class-variance-authority` for variants, and `lucide-react` for icons. This ensures accessibility (focus states, ARIA) and consistency.
+
+## ⚙️ Getting Started
+
+1. Clone the repository:
+   ```bash
+   git clone <repo-url>
+   cd Zayka-darbar
+   ```
+2. Install dependencies (pnpm recommended):
+   ```bash
+   pnpm install
+   # or
    npm install
-   \`\`\`
-
-3. **Run the development server:**
-   \`\`\`bash
+   ```
+3. Start development server:
+   ```bash
+   pnpm dev
+   # or
    npm run dev
-   \`\`\`
+   ```
+4. Visit: http://localhost:3000
 
-4. **Open your browser and navigate to:**
-   \`\`\`
-   http://localhost:3000
-   \`\`\`
+## 🧪 Scripts
 
-## Required Dependencies
+```bash
+pnpm dev      # Run dev server
+pnpm build    # Production build
+pnpm start    # Start built app
+pnpm lint     # Lint codebase
+```
 
-If you encounter any dependency issues, install these packages:
+## 🌍 Environment Variables
 
-\`\`\`bash
-npm install next@14.0.0 react@^18 react-dom@^18
-npm install next-themes@^0.2.1 framer-motion@^10.16.0 lucide-react@^0.294.0
-npm install @radix-ui/react-dialog@^1.0.5 @radix-ui/react-dropdown-menu@^2.0.6
-npm install @radix-ui/react-select@^2.0.0 @radix-ui/react-separator@^1.0.3
-npm install @radix-ui/react-switch@^1.0.3 @radix-ui/react-tabs@^1.0.4
-npm install @radix-ui/react-radio-group@^1.1.3
-npm install class-variance-authority@^0.7.0 clsx@^2.0.0 tailwind-merge@^2.0.0
-npm install -D typescript@^5 @types/node@^20 @types/react@^18 @types/react-dom@^18
-npm install -D autoprefixer@^10.0.1 postcss@^8 tailwindcss@^3.3.0
-\`\`\`
+Create a `.env.local` file for Supabase (example):
 
-## Project Structure
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_public_anon_key
+```
+<!-- # SUPABASE_SERVICE_ROLE_KEY=optional_service_role_if_needed -->
 
-\`\`\`
-zayka-restaurant/
-├── app/                    # Next.js app directory
-├── components/            # React components
-│   ├── ui/               # UI components
-│   ├── admin/            # Admin components
-│   ├── auth/             # Authentication components
-│   └── layout/           # Layout components
-├── lib/                  # Utility functions
-├── hooks/                # Custom React hooks
-└── public/               # Static assets
-\`\`\`
+## 📜 License
+The application is licensed under Solutions with Aaqil, for
+Educational / non-commercial use request permission.
 
-## Pages
+---
 
-- **Home** (`/`) - Landing page with offers and specials
-- **Menu** (`/menu`) - Browse menu items by category
-- **Cart** (`/cart`) - View and manage cart items
-- **Checkout** (`/checkout`) - Complete order with payment
-- **Orders** (`/orders`) - Track current and past orders
-- **Admin** (`/admin`) - Admin dashboard
-- **Admin Menu** (`/admin/menu`) - Manage menu items
-- **Admin Orders** (`/admin/orders`) - Manage live orders
+Made with ❤️ by Aaqil.
 
-## Theme Support
-
-The website supports both light and dark themes. Use the theme toggle in the navigation bar to switch between themes.
-
-## Customization
-
-- **Colors**: Edit the `zayka` color palette in `tailwind.config.ts`
-- **Menu Items**: Update the mock data in `lib/data.ts`
-- **Styling**: Modify components in the `components/` directory
-
-## Troubleshooting
-
-If you encounter CSS issues:
-1. Make sure all dependencies are installed
-2. Clear your browser cache
-3. Restart the development server
-4. Check that Tailwind CSS is properly configured
-
-## License
-
-This project is for educational purposes.
