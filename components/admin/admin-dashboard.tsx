@@ -40,9 +40,9 @@ const stats = [
 
 const quickActions = [
   {
-    title: "Add New Menu Item",
-    description: "Add a new dish to your menu",
-    href: "/admin/menu",
+    title: "Offers & Specials",
+    description: "Manage special offers and today's specials",
+    href: "/admin/offers",
     icon: Plus,
     color: "bg-zayka-600 hover:bg-zayka-700",
   },
@@ -165,7 +165,7 @@ export default function AdminDashboard() {
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {quickActions.map((action) => (
                 <Link key={action.title} href={action.href}>
-                  <Button variant="outline" className="h-auto p-4 flex flex-col items-start gap-2 hover:bg-muted/50">
+                  <Button variant="outline" className="h-auto p-4 flex flex-col items-start gap-2 hover:bg-muted/50 w-full">
                     <action.icon className="h-5 w-5" />
                     <div className="text-left">
                       <div className="font-medium">{action.title}</div>
