@@ -12,6 +12,8 @@ interface UserProfile {
   full_name?: string
   phone?: string
   role?: string
+  image?: string
+  imagePath?: string
 }
 
 interface AuthContextType {
@@ -40,7 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         last_name: currentUser.user_metadata?.last_name,
         full_name: currentUser.user_metadata?.full_name,
         phone: currentUser.user_metadata?.phone,
-        role: currentUser.user_metadata?.role || 'customer', 
+        role: currentUser.user_metadata?.role || 'customer',
+        image: currentUser.user_metadata?.image,
+        imagePath: currentUser.user_metadata?.imagePath,
       }
     } catch (error) {
       console.error('Error fetching profile:', error)

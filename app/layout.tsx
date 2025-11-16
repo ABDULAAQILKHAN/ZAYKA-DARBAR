@@ -15,7 +15,7 @@ const fontSans = FontSans({
 
 export const metadata = {
   title: "Zayka - Delicious Food Delivered",
-  description: "Order delicious food from Zayka restaurant",
+  description: "Order delicious food from Zayka darbar",
     generator: 'v0.dev'
 }
 
