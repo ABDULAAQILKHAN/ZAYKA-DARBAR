@@ -12,6 +12,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
+import { useAppDispatch } from '@/store/hooks'
+import { setToken } from '@/store/authSlice'
+import { useCreateProfileMutation } from '@/store/profileApi'
 // import { useAuth } from "@/components/providers/auth-provider"
 import toast from "react-hot-toast"
 
@@ -36,6 +39,8 @@ export default function LoginForm() {
   const router = useRouter()
   // const { refreshProfile } = useAuth()
   const supabase = createClient()
+  const dispatch = useAppDispatch()
+  const [createProfile] = useCreateProfileMutation()
 
   // Email regex pattern
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -99,13 +104,39 @@ export default function LoginForm() {
         return
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         toast.success("Login successful! Welcome back to Zayka!")
+
+        // Save access token for subsequent API calls
+        const accessToken = data.session.access_token
+        if (accessToken) {
+          dispatch(setToken(accessToken))
+        }
+
+        // Attempt to create/update profile (backend should upsert ideally)
+        try {
+          await createProfile({
+            id: data.user.id,
+            userId: data.user.id,
+            name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+            email: data.user.email || formData.email,
+            phone: data.user.user_metadata?.phone || '',
+            avatar: data.user.user_metadata?.avatar_url || '',
+            isDark: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }).unwrap()
+        } catch (e: any) {
+          if(e.status !== 409) {
+            console.warn('Profile creation failed (non-blocking):', e.status)
+            return
+          }
+        }
 
         const userRole = data.user.user_metadata?.role || 'customer'
         
         // Conditional routing based on role
-        if (userRole === 'customer') {
+  if (userRole === 'customer') {
           router.push("/menu")
         } else if (userRole === 'admin') {
           router.push("/admin")

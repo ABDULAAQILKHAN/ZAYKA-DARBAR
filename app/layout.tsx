@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/layout/navbar"
 import Footer from "@/components/layout/footer"
 import { CartProvider } from "@/components/providers/cart-provider"
+import { StoreProvider } from "@/components/providers/store-provider"
 import { AuthProvider } from "@/components/providers/auth-provider"
 import { cn } from "@/lib/utils"
 import "@/app/globals.css"
@@ -29,15 +30,17 @@ export default function RootLayout({
       <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <Toaster position="bottom-center" />
-          <AuthProvider>
-            <CartProvider>
-              <div className="relative flex min-h-screen flex-col">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-            </CartProvider>
-          </AuthProvider>
+          <StoreProvider>
+            <AuthProvider>
+              <CartProvider>
+                <div className="relative flex min-h-screen flex-col">
+                  <Navbar />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+              </CartProvider>
+            </AuthProvider>
+          </StoreProvider>
         </ThemeProvider>
       </body>
     </html>
