@@ -23,17 +23,19 @@ import toast from "react-hot-toast"
 
 const getNavItems = (userRole?: string, isAuthenticated?: boolean) => {
   const baseItems = [
-    { name: "Home", href: "/" },
     { name: "Menu", href: "/menu" },
-    { name: "Contact", href: "/contact" }
+    // { name: "Contact", href: "/contact" }
   ]
 
+  if (!isAuthenticated) {
+    baseItems.unshift({ name: "Home", href: "/" })
+  }
   // Only show Orders if user is logged in as customer
   if (isAuthenticated && userRole === 'customer') {
     baseItems.push({ name: "My orders", href: "/orders" })
   }
 
-  // Only show Admin if user is admin (hidden for now as requested)
+  // Only show Admin if user is admin (hidden for now)
   if (userRole === 'admin') {
     baseItems.length = 0;
     baseItems.push({ name: "Admin", href: "/admin" })
@@ -49,36 +51,15 @@ export default function Navbar() {
   const { items } = useCart()
   const supabase = createClient()
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const  navItems = getNavItems(profile?.role, !!user)
-  const data = useAuth();
+  const { user, profile, error: authError, isLoading: authLoading, refreshProfile } = useAuth()
+  const navItems = getNavItems(profile?.role, !!user)
   
   useEffect(() => {
-    const fetchUser = async () => {
-      if(data?.error){
-        console.error('Error fetching user in Navbar:', data.error)
-        toast.error('Error fetching user data')
-        setError(data.error)
-        return
-      }
-      try{
-        setIsLoading(true)
-        setUser(data?.user)
-        setProfile(data.profile)
-        //const { data, error } = await supabase.auth.getUser()
-        // setProfile(data.user.user_metadata)
-      }catch{
-        toast.error('An unexpected error occurred');
-        setError('An unexpected error occurred')
-      }finally{
-        setIsLoading(false)
-      }
-      }
-    fetchUser()
-  }, [data])
+    if (authError) {
+      toast.error('Error fetching user data')
+      console.error('Auth error in navbar:', authError)
+    }
+  }, [authError])
 
 
   useEffect(() => {
@@ -105,9 +86,8 @@ export default function Navbar() {
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut()
-      setUser(null)
-      setProfile(null)
       router.push("/auth/login")
+      localStorage.clear()
       toast.success("Logged out successfully")
     } catch (error) {
       toast.error("Error logging out")
@@ -165,7 +145,7 @@ export default function Navbar() {
             )}
 
             {/* Authentication Section */}
-            {isLoading ? (
+            {authLoading ? (
               <div className="hidden md:block">
                 <Button variant="ghost" size="sm" disabled>
                   Loading...
@@ -176,8 +156,18 @@ export default function Navbar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="gap-2">
-                      <User className="h-4 w-4" />
-                      {profile?.first_name[0] +  profile?.last_name[0]}
+                      {profile?.image ? (
+                        <img
+                          src={profile.image}
+                          alt="Avatar"
+                          className="h-8 w-8 rounded-full object-cover border"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-zayka-600 text-white flex items-center justify-center text-xs font-semibold">
+                          {((profile?.first_name?.[0] || "") + (profile?.last_name?.[0] || "") || profile?.email?.[0] || 'U').toUpperCase()}
+                        </div>
+                      )}
+                      <span className="hidden md:inline">{profile?.first_name || profile?.email}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
