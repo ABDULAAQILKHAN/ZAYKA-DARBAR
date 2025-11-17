@@ -61,18 +61,16 @@ export default function SpecialOffers() {
   const { data: apiOffers, isLoading, error } = useGetActiveSpecialOffersQuery()
   
   // Debug logging
-  console.log('SpecialOffers Debug:', {
-    apiOffers,
-    isLoading,
-    error,
-    apiOffersLength: apiOffers?.length,
-    fallbackOffersLength: fallbackOffers.length,
-    apiOffersType: typeof apiOffers,
-    isArray: Array.isArray(apiOffers)
-  })
-  
-  // Use API data if available (even if empty array), otherwise fallback to static data
-  // If API call succeeded but returned empty array, we still want to show empty state, not fallback
+  // console.log('SpecialOffers Debug:', {
+  //   apiOffers,
+  //   isLoading,
+  //   error,
+  //   apiOffersLength: apiOffers?.length,
+  //   fallbackOffersLength: fallbackOffers.length,
+  //   apiOffersType: typeof apiOffers,
+  //   isArray: Array.isArray(apiOffers)
+  // })
+
   const offers = Array.isArray(apiOffers) ? apiOffers : fallbackOffers
   const showFallback = !Array.isArray(apiOffers) || apiOffers.length === 0
 
