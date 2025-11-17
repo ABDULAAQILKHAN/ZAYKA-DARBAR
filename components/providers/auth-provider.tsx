@@ -14,6 +14,7 @@ interface UserProfile {
   role?: string
   image?: string
   imagePath?: string
+  isDark?: boolean
 }
 
 interface AuthContextType {
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: currentUser.user_metadata?.role || 'customer',
         image: currentUser.user_metadata?.image,
         imagePath: currentUser.user_metadata?.imagePath,
+        isDark: currentUser.user_metadata?.isDark,
       }
     } catch (error) {
       console.error('Error fetching profile:', error)

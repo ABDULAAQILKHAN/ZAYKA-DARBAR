@@ -82,15 +82,15 @@ export default function TodaysSpecial() {
   const { data: apiSpecials, isLoading, error } = useGetActiveTodaysSpecialsQuery()
 
   // Debug logging
-  console.log('TodaysSpecial Debug:', {
-    apiSpecials,
-    isLoading,
-    error,
-    apiSpecialsLength: apiSpecials?.length,
-    fallbackSpecialsLength: fallbackSpecialItems.length,
-    apiSpecialsType: typeof apiSpecials,
-    isArray: Array.isArray(apiSpecials)
-  })
+  // console.log('TodaysSpecial Debug:', {
+  //   apiSpecials,
+  //   isLoading,
+  //   error,
+  //   apiSpecialsLength: apiSpecials?.length,
+  //   fallbackSpecialsLength: fallbackSpecialItems.length,
+  //   apiSpecialsType: typeof apiSpecials,
+  //   isArray: Array.isArray(apiSpecials)
+  // })
 
   // Use API data if available (even if empty array), otherwise fallback to static data
   const specialItems = Array.isArray(apiSpecials) ? apiSpecials : fallbackSpecialItems
