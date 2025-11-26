@@ -18,7 +18,7 @@ import {
   useUpdateSpecialOfferMutation,
   useGetSpecialOfferByIdQuery
 } from "@/store/offersApi"
-import { deleteImage } from "@/lib/supabase/storage"
+import { deleteImage, getImagePathFromUrl } from "@/lib/supabase/storage"
 import toast from "react-hot-toast"
 
 interface SpecialOfferFormProps {
@@ -34,6 +34,7 @@ export function SpecialOfferForm({ offerId, onClose }: SpecialOfferFormProps) {
     link: "/menu",
     isActive: true
   })
+  const [newlyUploadedImage, setNewlyUploadedImage] = useState<string | null>(null)
 
   const { data: existingOffer } = useGetSpecialOfferByIdQuery(offerId!, {
     skip: !offerId
@@ -70,17 +71,39 @@ export function SpecialOfferForm({ offerId, onClose }: SpecialOfferFormProps) {
         await createOffer(formData).unwrap()
         toast.success("Special offer created successfully")
       }
+      setNewlyUploadedImage(null) // Clear tracking on success
       onClose()
     } catch (error) {
       toast.error("Failed to save special offer")
+      
+      // Cleanup newly uploaded image if API call failed
+      if (newlyUploadedImage) {
+        try {
+          const imagePath = getImagePathFromUrl(newlyUploadedImage)
+          if (imagePath) {
+            await deleteImage(imagePath)
+            console.log("Cleaned up uploaded image due to API failure")
+          }
+          setFormData(prev => ({ ...prev, image: existingOffer?.image || "" }))
+          setNewlyUploadedImage(null)
+        } catch (deleteError) {
+          console.error("Failed to cleanup image:", deleteError)
+        }
+      }
     }
   }
 
   const handleImageChange = async (newImageUrl: string) => {
+    // Track this as a newly uploaded image (for potential rollback)
+    setNewlyUploadedImage(newImageUrl)
+    
     // If updating an existing offer and there's an old image, delete it
     if (offerId && existingOffer?.image && existingOffer.image !== newImageUrl) {
       try {
-        await deleteImage(existingOffer.image)
+        const oldImagePath = getImagePathFromUrl(existingOffer.image)
+        if (oldImagePath) {
+          await deleteImage(oldImagePath)
+        }
       } catch (error) {
         console.log("Failed to delete old image:", error)
         // Don't block the update if old image deletion fails

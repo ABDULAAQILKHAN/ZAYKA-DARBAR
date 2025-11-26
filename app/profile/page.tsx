@@ -142,12 +142,14 @@ export default function ProfilePage() {
   setImgLoading(true)
   setAvoidProfileImageSync(true)
     const localPreviewUrl = imageUrl
+    let uploadedPath: string | null = null
 
     try {
       if (imagePath) {
         try { await deleteImage(imagePath) } catch (delErr:any) { console.warn('Previous image delete failed', delErr) }
       }
-      const newPath = await uploadImage(file, user.id) 
+      const newPath = await uploadImage(file, user.id)
+      uploadedPath = newPath // Track uploaded path for potential cleanup
       
       const { data: publicUrlData } = supabase.storage
         .from('Profile')
@@ -180,6 +182,16 @@ export default function ProfilePage() {
       setImgError(err.message || "Failed to upload image.")
       toast.error(err.message || "Failed to upload image.")
       setImageUrl(profile?.image || "")
+      
+      // Cleanup uploaded image if user update failed
+      if (uploadedPath) {
+        try {
+          await deleteImage(uploadedPath)
+          console.log("Cleaned up uploaded image due to API failure")
+        } catch (deleteError) {
+          console.error("Failed to cleanup uploaded image:", deleteError)
+        }
+      }
     } finally {
       setImgLoading(false)
       if (localPreviewUrl.startsWith('blob:')) {

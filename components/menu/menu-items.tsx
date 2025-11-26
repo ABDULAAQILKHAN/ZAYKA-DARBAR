@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
-import { getMenuItems } from "@/lib/data"
+import { useGetAvailableMenuItemsQuery } from "@/store/menuApi"
 
 const container = {
   hidden: { opacity: 0 },
@@ -27,20 +27,28 @@ const item = {
 
 function MenuItemsContent() {
   const searchParams = useSearchParams()
-  const [category, setCategory] = useState("all")
-  const [menuItems, setMenuItems] = useState<any[]>([])
+  const [category, setCategory] = useState("")
   const { addItem } = useCart()
 
   useEffect(() => {
     // Only access search params after component mounts
-    const categoryParam = searchParams.get("category") || "all"
+    const categoryParam = searchParams.get("category") || ""
     setCategory(categoryParam)
   }, [searchParams])
 
-  useEffect(() => {
-    const items = getMenuItems(category)
-    setMenuItems(items)
-  }, [category])
+  const { data: allMenuItems = [], isLoading } = useGetAvailableMenuItemsQuery({
+    category: category || undefined
+  })
+  
+  const menuItems = category ? allMenuItems.filter(item => item.categoryId === category) : allMenuItems
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zayka-600"></div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -71,7 +79,7 @@ function MenuItemsContent() {
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">{item.description}</p>
                 <div className="flex items-center justify-between">
-                  <Badge variant="secondary">{item.category}</Badge>
+                  <Badge variant="secondary">{item.categoryId}</Badge>
                   <Button
                     size="sm"
                     onClick={() =>

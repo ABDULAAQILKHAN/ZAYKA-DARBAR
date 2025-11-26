@@ -4,45 +4,7 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
-
-const categories = [
-  {
-    id: "starters",
-    name: "Starters",
-    image: "/nonveg starter.png?height=200&width=200",
-    count: 12,
-  },
-  {
-    id: "main-course",
-    name: "Main Course",
-    image: "/main course.png?height=200&width=200",
-    count: 24,
-  },
-  {
-    id: "chicken",
-    name: "Chicken",
-    image: "/chicken.png?height=200&width=200",
-    count: 18,
-  },
-  {
-    id: "vegetarian",
-    name: "Vegetarian",
-    image: "/vegitarian.png?height=200&width=200",
-    count: 16,
-  },
-  {
-    id: "breads",
-    name: "Breads",
-    image: "/breads.png?height=200&width=200",
-    count: 8,
-  },
-  {
-    id: "desserts",
-    name: "Desserts",
-    image: "/desserts.png?height=200&width=200",
-    count: 10,
-  },
-]
+import { useGetActiveMenuCategoriesQuery, useGetMenuItemsQuery } from "@/store/menuApi"
 
 const container = {
   hidden: { opacity: 0 },
@@ -60,6 +22,29 @@ const item = {
 }
 
 export default function PopularCategories() {
+  const { data: categories = [], isLoading } = useGetActiveMenuCategoriesQuery()
+  const { data: allMenuItems = [] } = useGetMenuItemsQuery({})
+  
+  // Count items per category
+  const categoriesWithCount = categories.map(category => ({
+    ...category,
+    count: allMenuItems.filter(item => item.categoryId === category.id).length
+  }))
+  
+  if (isLoading) {
+    return (
+      <section className="container mx-auto px-4 md:px-6 py-12">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold tracking-tight">Browse by Category</h2>
+          <p className="text-muted-foreground mt-2">Explore our wide range of delicious options</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zayka-600"></div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="container mx-auto px-4 md:px-6 py-12">
       <div className="text-center mb-10">
@@ -74,7 +59,7 @@ export default function PopularCategories() {
         viewport={{ once: true, margin: "-100px" }}
         className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6"
       >
-        {categories.map((category) => (
+        {categoriesWithCount.slice(0, 6).map((category) => (
           <motion.div key={category.id} variants={item}>
             <Link href={`/menu?category=${category.id}`}>
               <Card className="overflow-hidden h-full transition-all duration-200 hover:shadow-md hover:scale-105">

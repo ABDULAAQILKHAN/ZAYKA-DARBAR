@@ -19,7 +19,7 @@ import {
   useUpdateTodaysSpecialMutation,
   useGetTodaysSpecialByIdQuery
 } from "@/store/offersApi"
-import { deleteImage } from "@/lib/supabase/storage"
+import { deleteImage, getImagePathFromUrl } from "@/lib/supabase/storage"
 import toast from "react-hot-toast"
 
 interface TodaysSpecialFormProps {
@@ -46,6 +46,7 @@ export function TodaysSpecialForm({ specialId, onClose }: TodaysSpecialFormProps
     isVeg: true,
     isActive: true
   })
+  const [newlyUploadedImage, setNewlyUploadedImage] = useState<string | null>(null)
 
   const { data: existingSpecial } = useGetTodaysSpecialByIdQuery(specialId!, {
     skip: !specialId
@@ -89,17 +90,39 @@ export function TodaysSpecialForm({ specialId, onClose }: TodaysSpecialFormProps
         await createSpecial(formData).unwrap()
         toast.success("Special item created successfully")
       }
+      setNewlyUploadedImage(null) // Clear tracking on success
       onClose()
     } catch (error) {
       toast.error("Failed to save special item")
+      
+      // Cleanup newly uploaded image if API call failed
+      if (newlyUploadedImage) {
+        try {
+          const imagePath = getImagePathFromUrl(newlyUploadedImage)
+          if (imagePath) {
+            await deleteImage(imagePath)
+            console.log("Cleaned up uploaded image due to API failure")
+          }
+          setFormData(prev => ({ ...prev, image: existingSpecial?.image || "" }))
+          setNewlyUploadedImage(null)
+        } catch (deleteError) {
+          console.error("Failed to cleanup image:", deleteError)
+        }
+      }
     }
   }
 
   const handleImageChange = async (newImageUrl: string) => {
+    // Track this as a newly uploaded image (for potential rollback)
+    setNewlyUploadedImage(newImageUrl)
+    
     // If updating an existing special and there's an old image, delete it
     if (specialId && existingSpecial?.image && existingSpecial.image !== newImageUrl) {
       try {
-        await deleteImage(existingSpecial.image)
+        const oldImagePath = getImagePathFromUrl(existingSpecial.image)
+        if (oldImagePath) {
+          await deleteImage(oldImagePath)
+        }
       } catch (error) {
         console.log("Failed to delete old image:", error)
         // Don't block the update if old image deletion fails
