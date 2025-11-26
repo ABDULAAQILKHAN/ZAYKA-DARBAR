@@ -5,26 +5,35 @@ import type React from "react"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
-import { Plus, Edit, Trash2, Search } from "lucide-react"
+import { Plus, Edit, Trash2, Search, Eye, EyeOff, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { getMenuItems, getAllCategories } from "@/lib/data"
+import { MenuItemForm } from "./menu-item-form"
+import {
+  useGetMenuItemsQuery,
+  useGetActiveMenuCategoriesQuery,
+  useDeleteMenuItemMutation,
+  useToggleMenuItemAvailabilityMutation,
+  type MenuItem
+} from "@/store/menuApi"
+import { deleteImage, getImagePathFromUrl } from "@/lib/supabase/storage"
+import toast from "react-hot-toast"
 
 export default function MenuManagement() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedCategory, setSelectedCategory] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<any>(null)
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
 
-  const menuItems = getMenuItems(selectedCategory === "all" ? undefined : selectedCategory)
-  const categories = getAllCategories()
+  const { data: menuItems = [], isLoading, refetch } = useGetMenuItemsQuery({
+    category: selectedCategory || undefined
+  })
+  const { data: categories = [] } = useGetActiveMenuCategoriesQuery()
+  const [deleteMenuItem] = useDeleteMenuItemMutation()
+  const [toggleAvailability] = useToggleMenuItemAvailabilityMutation()
 
   const filteredItems = menuItems.filter(
     (item) =>
@@ -32,25 +41,36 @@ export default function MenuManagement() {
       item.description.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const handleAddItem = (formData: FormData) => {
-    // In a real app, this would save to a database
-    console.log("Adding new menu item:", Object.fromEntries(formData))
-    setIsAddDialogOpen(false)
-    alert("Menu item added successfully!")
-  }
-
-  const handleEditItem = (formData: FormData) => {
-    // In a real app, this would update the database
-    console.log("Updating menu item:", Object.fromEntries(formData))
-    setEditingItem(null)
-    alert("Menu item updated successfully!")
-  }
-
-  const handleDeleteItem = (itemId: string) => {
+  const handleDeleteItem = async (item: MenuItem) => {
     if (confirm("Are you sure you want to delete this menu item?")) {
-      // In a real app, this would delete from database
-      console.log("Deleting item:", itemId)
-      alert("Menu item deleted successfully!")
+      try {
+        // Delete the image first
+        if (item.image) {
+          const imagePath = getImagePathFromUrl(item.image)
+          if (imagePath) {
+            await deleteImage(imagePath)
+          }
+        }
+        
+        await deleteMenuItem(item.id).unwrap()
+        toast.success("Menu item deleted successfully!")
+      } catch (error) {
+        toast.error("Failed to delete menu item")
+        console.error("Delete error:", error)
+      }
+    }
+  }
+
+  const handleToggleAvailability = async (item: MenuItem) => {
+    try {
+      await toggleAvailability({
+        id: item.id,
+        isAvailable: !item.isAvailable
+      }).unwrap()
+      toast.success(`Menu item ${!item.isAvailable ? 'enabled' : 'disabled'} successfully!`)
+    } catch (error) {
+      toast.error("Failed to update availability")
+      console.error("Toggle availability error:", error)
     }
   }
 
@@ -61,20 +81,10 @@ export default function MenuManagement() {
           <h1 className="text-3xl font-bold tracking-tight">Menu Management</h1>
           <p className="text-muted-foreground mt-2">Add, edit, and manage your restaurant menu</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Menu Item
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Add New Menu Item</DialogTitle>
-            </DialogHeader>
-            <MenuItemForm onSubmit={handleAddItem} />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Menu Item
+        </Button>
       </div>
 
       {/* Filters */}
@@ -90,10 +100,10 @@ export default function MenuManagement() {
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-full md:w-[200px]">
-            <SelectValue placeholder="Select category" />
+            <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value={"0"}>All Categories</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
                 {category.name}
@@ -104,147 +114,141 @@ export default function MenuManagement() {
       </div>
 
       {/* Menu Items Grid */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
-        {filteredItems.map((item) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card className="overflow-hidden">
-              <div className="relative h-48">
-                <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-                <div className="absolute top-2 right-2 flex gap-1">
-                  <Badge variant={item.isVeg ? "outline" : "default"}>{item.isVeg ? "Veg" : "Non-Veg"}</Badge>
-                  {item.isSpicy && <Badge variant="destructive">Spicy</Badge>}
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold">{item.name}</h3>
-                  <span className="font-bold text-zayka-600">${item.price.toFixed(2)}</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
-                <div className="flex items-center justify-between">
-                  <Badge variant="secondary">{item.category}</Badge>
-                  <div className="flex gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={() => setEditingItem(item)}>
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Edit Menu Item</DialogTitle>
-                        </DialogHeader>
-                        <MenuItemForm item={item} onSubmit={handleEditItem} />
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteItem(item.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zayka-600"></div>
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          {filteredItems.map((item) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className={`overflow-hidden ${!item.isAvailable ? 'opacity-60' : ''}`}>
+                <div className="relative h-48">
+                  <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+                  <div className="absolute top-2 left-2">
+                    {!item.isAvailable && (
+                      <Badge variant="destructive">Unavailable</Badge>
+                    )}
+                  </div>
+                  <div className="absolute top-2 right-2 flex flex-col gap-1">
+                    <Badge variant={item.isVeg ? "outline" : "default"}>
+                      {item.isVeg ? "Veg" : "Non-Veg"}
+                    </Badge>
+                    {item.isSpicy && <Badge variant="destructive">Spicy</Badge>}
+                    {item.preparationTime && item.preparationTime as number > 0 && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {item.preparationTime}m
+                      </Badge>
+                    )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </motion.div>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold">{item.name}</h3>
+                    <span className="font-bold text-zayka-600">${item.price}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{item.description}</p>
+                  
+                  {/* Ingredients */}
+                  {item.ingredients && item.ingredients.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-xs text-muted-foreground mb-1">Ingredients:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {item.ingredients.slice(0, 3).map((ingredient, index) => (
+                          <span key={index} className="text-xs bg-gray-100 px-1 py-0.5 rounded">
+                            {ingredient}
+                          </span>
+                        ))}
+                        {item.ingredients.length > 3 && (
+                          <span className="text-xs text-muted-foreground">
+                            +{item.ingredients.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
-      {filteredItems.length === 0 && (
+                  {/* Allergens */}
+                  {item.allergens && item.allergens.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs text-orange-600 mb-1">Allergens:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {item.allergens.map((allergen, index) => (
+                          <span key={index} className="text-xs bg-orange-100 text-orange-800 px-1 py-0.5 rounded">
+                            {allergen}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {categories.find(c => c.id === item.categoryId)?.name || item.categoryId}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleAvailability(item)}
+                        className={item.isAvailable ? "text-orange-600" : "text-green-600"}
+                      >
+                        {item.isAvailable ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setEditingItemId(item.id)}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteItem(item)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+
+      {!isLoading && filteredItems.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No menu items found.</p>
         </div>
+      )}
+
+      {/* Add/Edit Dialog */}
+      {(isAddDialogOpen || editingItemId) && (
+        <MenuItemForm
+          itemId={editingItemId}
+          onClose={() => {
+            setIsAddDialogOpen(false)
+            setEditingItemId(null)
+          }}
+        />
       )}
     </div>
   )
 }
 
-interface MenuItemFormProps {
-  item?: any
-  onSubmit: (formData: FormData) => void
-}
 
-function MenuItemForm({ item, onSubmit }: MenuItemFormProps) {
-  const categories = getAllCategories()
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    onSubmit(formData)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" name="name" defaultValue={item?.name} required />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="price">Price ($)</Label>
-          <Input id="price" name="price" type="number" step="0.01" defaultValue={item?.price} required />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea id="description" name="description" defaultValue={item?.description} rows={3} required />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Select name="category" defaultValue={item?.category}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="image">Image URL</Label>
-          <Input
-            id="image"
-            name="image"
-            type="url"
-            defaultValue={item?.image}
-            placeholder="https://example.com/image.jpg"
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-6">
-        <div className="flex items-center space-x-2">
-          <Switch id="isVeg" name="isVeg" defaultChecked={item?.isVeg} />
-          <Label htmlFor="isVeg">Vegetarian</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch id="isSpicy" name="isSpicy" defaultChecked={item?.isSpicy} />
-          <Label htmlFor="isSpicy">Spicy</Label>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="submit">{item ? "Update Item" : "Add Item"}</Button>
-      </div>
-    </form>
-  )
-}

@@ -6,12 +6,10 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
+import { MenuCategory } from "@/store/menuApi"
+
 interface MenuCategoriesProps {
-  categories: {
-    id: string
-    name: string
-    count: number
-  }[]
+  categories: MenuCategory[]
 }
 
 export default function MenuCategories({ categories }: MenuCategoriesProps) {
@@ -45,7 +43,6 @@ export default function MenuCategories({ categories }: MenuCategoriesProps) {
             onClick={() => handleCategoryChange(category.id)}
           >
             {category.name}
-            <span className="ml-auto text-xs text-muted-foreground">{category.count}</span>
           </CategoryButton>
         ))}
       </div>

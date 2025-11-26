@@ -28,32 +28,7 @@ export default function OffersPage() {
 
   const { data: specialOffers = [], isLoading: offersLoading, error: offersError } = useGetSpecialOffersQuery()
   const { data: todaysSpecials = [], isLoading: specialsLoading, error: specialsError } = useGetTodaysSpecialsQuery()
-  // Debug logging
-//   console.log('Admin Offers Debug:', {
-//     specialOffers,
-//     offersLoading,
-//     offersError,
-//     todaysSpecials,
-//     specialsLoading,
-//     specialsError,
-//     specialOffersLength: specialOffers?.length,
-//     todaysSpecialsLength: todaysSpecials?.length
-//   })
 
-  useEffect(() => {
-    if(specialOffers) {
-      console.log('Special Offers:', specialOffers)
-    }
-    if(todaysSpecials) {
-      console.log('Today\'s Specials:', todaysSpecials)
-    }
-    if (offersError) {
-      console.error('Special Offers Error:', offersError)
-    }
-    if (specialsError) {
-      console.error('Today\'s Specials Error:', specialsError)
-    }
-  }, [offersError, specialsError])
 
   const [deleteOffer] = useDeleteSpecialOfferMutation()
   const [deleteSpecial] = useDeleteTodaysSpecialMutation()
