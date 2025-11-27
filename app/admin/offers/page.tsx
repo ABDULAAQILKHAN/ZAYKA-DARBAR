@@ -18,7 +18,7 @@ import { SpecialOfferForm } from "@/components/admin/special-offer-form"
 import { TodaysSpecialForm } from "@/components/admin/todays-special-form"
 import Image from "next/image"
 import toast from "react-hot-toast"
-import { deleteImage } from "@/lib/supabase/storage"
+import { deleteImage, getImagePathFromUrl } from "@/lib/supabase/storage"
 
 export default function OffersPage() {
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null)
@@ -47,7 +47,10 @@ export default function OffersPage() {
         // If the offer had an image, try to delete it from storage
         if (offerToDelete?.image) {
           try {
-            await deleteImage(offerToDelete.image)
+            const imagePath = getImagePathFromUrl(offerToDelete.image)
+            if (imagePath) {
+              await deleteImage(imagePath)
+            }
           } catch (imageError) {
             console.log('Failed to delete image from storage:', imageError)
             // Don't fail the entire operation if image deletion fails
@@ -73,7 +76,10 @@ export default function OffersPage() {
         // If the special had an image, try to delete it from storage
         if (specialToDelete?.image) {
           try {
-            await deleteImage(specialToDelete.image)
+            const imagePath = getImagePathFromUrl(specialToDelete.image)
+            if (imagePath) {
+              await deleteImage(imagePath)
+            }
           } catch (imageError) {
             console.log('Failed to delete image from storage:', imageError)
             // Don't fail the entire operation if image deletion fails

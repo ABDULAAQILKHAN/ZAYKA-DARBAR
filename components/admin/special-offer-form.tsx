@@ -97,18 +97,8 @@ export function SpecialOfferForm({ offerId, onClose }: SpecialOfferFormProps) {
     // Track this as a newly uploaded image (for potential rollback)
     setNewlyUploadedImage(newImageUrl)
     
-    // If updating an existing offer and there's an old image, delete it
-    if (offerId && existingOffer?.image && existingOffer.image !== newImageUrl) {
-      try {
-        const oldImagePath = getImagePathFromUrl(existingOffer.image)
-        if (oldImagePath) {
-          await deleteImage(oldImagePath)
-        }
-      } catch (error) {
-        console.log("Failed to delete old image:", error)
-        // Don't block the update if old image deletion fails
-      }
-    }
+    // Note: ImageUpload component already handles old image deletion via updateImage()
+    // so we don't need to delete it here to avoid double deletion
     
     setFormData(prev => ({ ...prev, image: newImageUrl }))
   }

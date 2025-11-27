@@ -116,18 +116,8 @@ export function TodaysSpecialForm({ specialId, onClose }: TodaysSpecialFormProps
     // Track this as a newly uploaded image (for potential rollback)
     setNewlyUploadedImage(newImageUrl)
     
-    // If updating an existing special and there's an old image, delete it
-    if (specialId && existingSpecial?.image && existingSpecial.image !== newImageUrl) {
-      try {
-        const oldImagePath = getImagePathFromUrl(existingSpecial.image)
-        if (oldImagePath) {
-          await deleteImage(oldImagePath)
-        }
-      } catch (error) {
-        console.log("Failed to delete old image:", error)
-        // Don't block the update if old image deletion fails
-      }
-    }
+    // Note: ImageUpload component already handles old image deletion via updateImage()
+    // so we don't need to delete it here to avoid double deletion
     
     setFormData(prev => ({ ...prev, image: newImageUrl }))
   }
@@ -208,7 +198,7 @@ export function TodaysSpecialForm({ specialId, onClose }: TodaysSpecialFormProps
             <ImageUpload
               value={formData.image}
               onChange={handleImageChange}
-              folder="todays-specials"
+              folder="todays-special"
               acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
               maxSizeMB={5}
             />

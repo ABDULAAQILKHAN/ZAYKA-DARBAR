@@ -98,6 +98,20 @@ export const offersApi = createApi({
     }),
     getSpecialOfferById: builder.query<SpecialOffer, string>({
       query: (id) => `special-offers/${id}`,
+      transformResponse: (response: any) => {
+        console.log('getSpecialOfferById raw response:', response)
+        // Handle different response structures
+        if (response && typeof response === 'object' && !Array.isArray(response)) {
+          // If response has data, item, or offer property, use that
+          if (response.data) return response.data
+          if (response.item) return response.item
+          if (response.offer) return response.offer
+          if (response.specialOffer) return response.specialOffer
+          // Otherwise assume the response itself is the item
+          return response
+        }
+        return response
+      },
       providesTags: (result, error, id) => [{ type: 'SpecialOffer', id }]
     }),
     createSpecialOffer: builder.mutation<SpecialOffer, CreateSpecialOfferInput>({
@@ -105,7 +119,7 @@ export const offersApi = createApi({
       invalidatesTags: [{ type: 'SpecialOffer', id: 'LIST' }, { type: 'SpecialOffer', id: 'ACTIVE' }]
     }),
     updateSpecialOffer: builder.mutation<SpecialOffer, UpdateSpecialOfferInput>({
-      query: ({ id, ...patch }) => ({ url: `special-offers/${id}`, method: 'PUT', body: patch }),
+      query: ({ id, ...patch }) => ({ url: `special-offers/${id}`, method: 'PATCH', body: patch }),
       invalidatesTags: (result, error, arg) => [
         { type: 'SpecialOffer', id: arg.id },
         { type: 'SpecialOffer', id: 'LIST' },
@@ -180,6 +194,20 @@ export const offersApi = createApi({
     }),
     getTodaysSpecialById: builder.query<TodaysSpecialItem, string>({
       query: (id) => `todays-specials/${id}`,
+      transformResponse: (response: any) => {
+        console.log('getTodaysSpecialById raw response:', response)
+        // Handle different response structures
+        if (response && typeof response === 'object' && !Array.isArray(response)) {
+          // If response has data, item, or special property, use that
+          if (response.data) return response.data
+          if (response.item) return response.item
+          if (response.special) return response.special
+          if (response.todaysSpecial) return response.todaysSpecial
+          // Otherwise assume the response itself is the item
+          return response
+        }
+        return response
+      },
       providesTags: (result, error, id) => [{ type: 'TodaysSpecial', id }]
     }),
     createTodaysSpecial: builder.mutation<TodaysSpecialItem, CreateTodaysSpecialInput>({
@@ -187,7 +215,7 @@ export const offersApi = createApi({
       invalidatesTags: [{ type: 'TodaysSpecial', id: 'LIST' }, { type: 'TodaysSpecial', id: 'ACTIVE' }]
     }),
     updateTodaysSpecial: builder.mutation<TodaysSpecialItem, UpdateTodaysSpecialInput>({
-      query: ({ id, ...patch }) => ({ url: `todays-specials/${id}`, method: 'PUT', body: patch }),
+      query: ({ id, ...patch }) => ({ url: `todays-specials/${id}`, method: 'PATCH', body: patch }),
       invalidatesTags: (result, error, arg) => [
         { type: 'TodaysSpecial', id: arg.id },
         { type: 'TodaysSpecial', id: 'LIST' },

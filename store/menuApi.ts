@@ -122,6 +122,19 @@ export const menuApi = createApi({
     }),
     getMenuItemById: builder.query<MenuItem, string>({
       query: (id) => `menu-items/${id}`,
+      transformResponse: (response: any) => {
+        console.log('getMenuItemById raw response:', response)
+        // Handle different response structures
+        if (response && typeof response === 'object' && !Array.isArray(response)) {
+          // If response has data, item, or menuItem property, use that
+          if (response.data) return response.data
+          if (response.item) return response.item
+          if (response.menuItem) return response.menuItem
+          // Otherwise assume the response itself is the item
+          return response
+        }
+        return response
+      },
       providesTags: (result, error, id) => [{ type: 'MenuItem', id }]
     }),
     getMenuItemsByCategory: builder.query<MenuItem[], string>({
