@@ -107,7 +107,7 @@ export async function deleteImage(imagePath: string): Promise<ImageDeleteResult>
   try {
     console.log('Deleting image:', imagePath)
 
-    const { error } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
       .remove([imagePath])
 
@@ -178,17 +178,30 @@ export async function updateImage(
  */
 export function getImagePathFromUrl(imageUrl: string): string | null {
   try {
-    if (!imageUrl || !imageUrl.includes(BUCKET_NAME)) {
+    console.log('Extracting path from URL:', imageUrl)
+    
+    if (!imageUrl) {
+      console.warn('getImagePathFromUrl: Empty image URL')
+      return null
+    }
+
+    // Check if URL contains the bucket name
+    if (!imageUrl.includes(BUCKET_NAME)) {
+      console.warn('getImagePathFromUrl: URL does not contain bucket name:', BUCKET_NAME)
       return null
     }
 
     // Extract path after bucket name
     const bucketIndex = imageUrl.indexOf(`${BUCKET_NAME}/`)
     if (bucketIndex === -1) {
+      console.warn('getImagePathFromUrl: Could not find bucket name with slash in URL')
       return null
     }
 
-    return imageUrl.substring(bucketIndex + `${BUCKET_NAME}/`.length)
+    const extractedPath = imageUrl.substring(bucketIndex + `${BUCKET_NAME}/`.length)
+    console.log('Extracted path:', extractedPath)
+    
+    return extractedPath
   } catch (error) {
     console.error('Error extracting image path:', error)
     return null
