@@ -56,7 +56,7 @@ export default function MenuList() {
             <Card className="overflow-hidden h-full transition-all duration-200 hover:shadow-md">
               <div className="relative h-48">
                 <Image src={menuItem.image || "/placeholder.svg"} alt={menuItem.name} fill className="object-cover" />
-                <Badge className="absolute top-2 right-2" variant={menuItem.isVeg ? "outline" : "default"}>
+                <Badge className="absolute top-2 right-2" variant={menuItem.isVeg ? "green" : "destructive"}>
                   {menuItem.isVeg ? "Veg" : "Non-Veg"}
                 </Badge>
                 {menuItem.isSpicy && (

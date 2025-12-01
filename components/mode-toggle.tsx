@@ -35,6 +35,7 @@ export function ModeToggle() {
   const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme)
     try {
+      if (!data.user) return
       const { error } = await supabase.auth.updateUser({
         data: {
           isDark: newTheme === "dark"
