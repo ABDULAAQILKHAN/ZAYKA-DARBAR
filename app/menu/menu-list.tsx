@@ -28,11 +28,11 @@ export default function MenuList() {
   const searchParams = useSearchParams()
   const category = searchParams.get("category") || ""
   const { addItem } = useCart()
-  
+
   const { data: allMenuItems = [], isLoading } = useGetAvailableMenuItemsQuery({
     category: category || undefined
   })
-  
+
   const menuItems = category ? allMenuItems.filter(menuItem => menuItem.categoryId === category) : allMenuItems
 
   if (isLoading) {
@@ -72,7 +72,7 @@ export default function MenuList() {
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">{menuItem.description}</p>
                 <div className="flex items-center justify-between">
-                  <Badge variant="secondary">{menuItem.categoryId}</Badge>
+                  <Badge variant="secondary">{menuItem.category}</Badge>
                   <Button
                     size="sm"
                     onClick={() =>

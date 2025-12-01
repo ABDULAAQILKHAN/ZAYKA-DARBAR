@@ -6,7 +6,7 @@ export interface MenuItem {
   description: string
   price: number
   image: string
-  categoryId:  string
+  categoryId: string
   category?: string
   isVeg: boolean
   isSpicy: boolean
@@ -35,10 +35,10 @@ export interface MenuCategory {
   updatedAt: string
 }
 
-interface CreateMenuItemInput extends Omit<MenuItem, 'id' | 'createdAt' | 'updatedAt'> {}
+interface CreateMenuItemInput extends Omit<MenuItem, 'id' | 'createdAt' | 'updatedAt'> { }
 interface UpdateMenuItemInput extends Partial<Omit<MenuItem, 'id'>> { id: string }
 
-interface CreateMenuCategoryInput extends Omit<MenuCategory, 'id' | 'createdAt' | 'updatedAt'> {}
+interface CreateMenuCategoryInput extends Omit<MenuCategory, 'id' | 'createdAt' | 'updatedAt'> { }
 interface UpdateMenuCategoryInput extends Partial<Omit<MenuCategory, 'id'>> { id: string }
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL as string
@@ -88,7 +88,7 @@ export const menuApi = createApi({
           return [{ type: 'MenuItem', id: 'LIST' }]
         }
         return [
-          ...result.map(r => ({ type: 'MenuItem' as const, id: r.id })), 
+          ...result.map(r => ({ type: 'MenuItem' as const, id: r.id })),
           { type: 'MenuItem', id: 'LIST' }
         ]
       }
@@ -156,67 +156,61 @@ export const menuApi = createApi({
         }
         console.warn('Unexpected response structure for menu items by category:', response)
         return []
-            },
-            providesTags: (result, error, category) => [{ type: 'MenuItem', id: `CATEGORY_${category}` }]
-          }),
-          createMenuItem: builder.mutation<MenuItem, CreateMenuItemInput>({
-            query: (body) => ({ url: 'menu-items', method: 'POST', body }),
-            invalidatesTags: (result, error, arg) => [
-        { type: 'MenuItem', id: 'LIST' }, 
+      },
+      providesTags: (result, error, category) => [{ type: 'MenuItem', id: `CATEGORY_${category}` }]
+    }),
+    createMenuItem: builder.mutation<MenuItem, CreateMenuItemInput>({
+      query: (body) => ({ url: 'menu-items', method: 'POST', body }),
+      invalidatesTags: (result, error, arg) => [
+        { type: 'MenuItem', id: 'LIST' },
         { type: 'MenuItem', id: 'AVAILABLE' },
         { type: 'MenuItem' as const, id: `CATEGORY_${arg.categoryId}` }
-            ]
-          }),
-          updateMenuItem: builder.mutation<MenuItem, UpdateMenuItemInput>({
-            query: ({ id, ...patch }) => ({ url: `menu-items/${id}`, method: 'PUT', body: patch }),
-            invalidatesTags: (result: MenuItem | undefined, error: unknown, arg: UpdateMenuItemInput) => [
+      ]
+    }),
+    updateMenuItem: builder.mutation<MenuItem, UpdateMenuItemInput>({
+      query: ({ id, ...patch }) => ({ url: `menu-items/${id}`, method: 'PUT', body: patch }),
+      invalidatesTags: (result: MenuItem | undefined, error: unknown, arg: UpdateMenuItemInput) => [
         { type: 'MenuItem', id: arg.id },
         { type: 'MenuItem', id: 'LIST' },
         { type: 'MenuItem', id: 'AVAILABLE' },
         ...(arg.categoryId ? [{ type: 'MenuItem' as const, id: `CATEGORY_${arg.categoryId}` }] : [])
-            ]
-          }),
-          deleteMenuItem: builder.mutation<{ success: boolean; id: string }, string>({
-            query: (id) => ({ url: `menu-items/${id}`, method: 'DELETE' }),
-            invalidatesTags: (result: { success: boolean; id: string } | undefined, error: unknown, id: string) => [
+      ]
+    }),
+    deleteMenuItem: builder.mutation<{ success: boolean; id: string }, string>({
+      query: (id) => ({ url: `menu-items/${id}`, method: 'DELETE' }),
+      invalidatesTags: (result: { success: boolean; id: string } | undefined, error: unknown, id: string) => [
         { type: 'MenuItem', id },
         { type: 'MenuItem', id: 'LIST' },
         { type: 'MenuItem', id: 'AVAILABLE' }
-            ]
-          }),
-          toggleMenuItemAvailability: builder.mutation<MenuItem, { id: string; isAvailable: boolean }>({
-            query: ({ id, isAvailable }) => ({
+      ]
+    }),
+    toggleMenuItemAvailability: builder.mutation<MenuItem, { id: string; isAvailable: boolean }>({
+      query: ({ id, isAvailable }) => ({
         url: `menu-items/${id}/availability`,
         method: 'PATCH',
         body: { isAvailable }
-            }),
-            invalidatesTags: (result: MenuItem | undefined, error: unknown, arg: { id: string; isAvailable: boolean }) => [
+      }),
+      invalidatesTags: (result: MenuItem | undefined, error: unknown, arg: { id: string; isAvailable: boolean }) => [
         { type: 'MenuItem', id: arg.id },
         { type: 'MenuItem', id: 'LIST' },
         { type: 'MenuItem', id: 'AVAILABLE' }
-            ]
-          }),
+      ]
+    }),
 
 
     // Menu Categories
-    getMenuCategories: builder.query<MenuCategory[], void>({
-      query: () => 'menu-categories',
+    getMenuCategories: builder.query<MenuCategory[], { active?: boolean } | void>({
+      query: (params) => {
+        const queryParams = new URLSearchParams()
+        if (params && typeof params === 'object' && params.active !== undefined) {
+          queryParams.append('active', params.active.toString())
+        }
+        return `menu-categories?${queryParams.toString()}`
+      },
       transformResponse: (response: any) => {
         console.log('getMenuCategories raw response:', response)
-        // Handle different response structures
-        if (Array.isArray(response)) {
-          return response
-        }
-        if (response && Array.isArray(response.data)) {
-          return response.data
-        }
-        if (response && Array.isArray(response.categories)) {
-          return response.categories
-        }
-        if (response && Array.isArray(response.menuCategories)) {
-          return response.menuCategories
-        }
-        console.warn('Unexpected response structure for menu categories:', response)
+        if (Array.isArray(response)) return response
+        if (response && Array.isArray(response.data)) return response.data
         return []
       },
       providesTags: (result) => {
@@ -224,7 +218,7 @@ export const menuApi = createApi({
           return [{ type: 'MenuCategory', id: 'LIST' }]
         }
         return [
-          ...result.map(r => ({ type: 'MenuCategory' as const, id: r.id })), 
+          ...result.map(r => ({ type: 'MenuCategory' as const, id: r.id })),
           { type: 'MenuCategory', id: 'LIST' }
         ]
       }
@@ -232,46 +226,48 @@ export const menuApi = createApi({
     getActiveMenuCategories: builder.query<MenuCategory[], void>({
       query: () => 'menu-categories?active=true',
       transformResponse: (response: any) => {
-        console.log('getActiveMenuCategories raw response:', response)
-        // Handle different response structures
-        if (Array.isArray(response)) {
-          return response
-        }
-        if (response && Array.isArray(response.data)) {
-          return response.data
-        }
-        if (response && Array.isArray(response.categories)) {
-          return response.categories
-        }
-        if (response && Array.isArray(response.menuCategories)) {
-          return response.menuCategories
-        }
-        console.warn('Unexpected response structure for active menu categories:', response)
+        if (Array.isArray(response)) return response
+        if (response && Array.isArray(response.data)) return response.data
         return []
       },
       providesTags: [{ type: 'MenuCategory', id: 'ACTIVE' }]
     }),
     getMenuCategoryById: builder.query<MenuCategory, string>({
       query: (id) => `menu-categories/${id}`,
+      transformResponse: (response: any) => {
+        if (response && response.data) return response.data
+        return response
+      },
       providesTags: (result, error, id) => [{ type: 'MenuCategory', id }]
     }),
     createMenuCategory: builder.mutation<MenuCategory, CreateMenuCategoryInput>({
-      query: (body) => ({ url: 'menu-categories', method: 'POST', body }),
+      query: (body) => ({
+        url: 'menu-categories',
+        method: 'POST',
+        body
+      }),
       invalidatesTags: [
-        { type: 'MenuCategory', id: 'LIST' }, 
+        { type: 'MenuCategory', id: 'LIST' },
         { type: 'MenuCategory', id: 'ACTIVE' }
       ]
     }),
     updateMenuCategory: builder.mutation<MenuCategory, UpdateMenuCategoryInput>({
-      query: ({ id, ...patch }) => ({ url: `menu-categories/${id}`, method: 'PUT', body: patch }),
+      query: ({ id, ...patch }) => ({
+        url: `menu-categories/${id}`,
+        method: 'PUT',
+        body: patch
+      }),
       invalidatesTags: (result, error, arg) => [
         { type: 'MenuCategory', id: arg.id },
         { type: 'MenuCategory', id: 'LIST' },
         { type: 'MenuCategory', id: 'ACTIVE' }
       ]
     }),
-    deleteMenuCategory: builder.mutation<{ success: boolean; id: string }, string>({
-      query: (id) => ({ url: `menu-categories/${id}`, method: 'DELETE' }),
+    deleteMenuCategory: builder.mutation<{ message: string }, string>({
+      query: (id) => ({
+        url: `menu-categories/${id}`,
+        method: 'DELETE'
+      }),
       invalidatesTags: (result, error, id) => [
         { type: 'MenuCategory', id },
         { type: 'MenuCategory', id: 'LIST' },
@@ -291,7 +287,7 @@ export const {
   useUpdateMenuItemMutation,
   useDeleteMenuItemMutation,
   useToggleMenuItemAvailabilityMutation,
-  
+
   // Menu Categories
   useGetMenuCategoriesQuery,
   useGetActiveMenuCategoriesQuery,
