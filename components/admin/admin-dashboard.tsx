@@ -61,6 +61,13 @@ const quickActions = [
     color: "bg-green-600 hover:bg-green-700",
   },
   {
+    title: "Category Management",
+    description: "Manage menu categories",
+    href: "/admin/categories",
+    icon: ShoppingBag, // Using ShoppingBag as a placeholder, or could import List or similar
+    color: "bg-purple-600 hover:bg-purple-700",
+  },
+  {
     title: "Settings",
     description: "Restaurant settings and preferences",
     href: "/admin/settings",
