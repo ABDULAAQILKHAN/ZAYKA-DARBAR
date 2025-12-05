@@ -5,7 +5,8 @@ import Image from "next/image"
 import { Minus, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { useCart } from "@/hooks/use-cart"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { removeFromCart, updateQuantity } from "@/store/cartSlice"
 
 const container = {
   hidden: { opacity: 0 },
@@ -23,7 +24,8 @@ const item = {
 }
 
 export default function CartItems() {
-  const { items, updateQuantity, removeItem } = useCart()
+  const dispatch = useAppDispatch()
+  const items = useAppSelector((state) => state.cart.items)
 
   if (items.length === 0) {
     return (
@@ -62,7 +64,7 @@ export default function CartItems() {
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+                        onClick={() => dispatch(updateQuantity({ id: item.id, quantity: Math.max(0, item.quantity - 1) }))}
                       >
                         <Minus className="h-3 w-3" />
                       </Button>
@@ -71,7 +73,7 @@ export default function CartItems() {
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }))}
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
@@ -83,7 +85,7 @@ export default function CartItems() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => dispatch(removeFromCart(item.id))}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

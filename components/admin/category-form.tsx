@@ -69,8 +69,10 @@ export function CategoryForm({ categoryId, onClose }: CategoryFormProps) {
             }
             setNewlyUploadedImage(null)
             onClose()
-        } catch (error) {
-            toast.error("Failed to save category")
+        } catch (error: any) {
+            console.error("Category save error:", error)
+            const errorMessage = error?.data?.error || error?.data?.message || "Failed to save category"
+            toast.error(errorMessage)
 
             if (newlyUploadedImage) {
                 try {

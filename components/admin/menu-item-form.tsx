@@ -43,10 +43,10 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
     ingredients: [] as string[],
     allergens: [] as string[],
     nutritionalInfo: {
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0
+      calories: "" as number | string,
+      protein: "" as number | string,
+      carbs: "" as number | string,
+      fat: "" as number | string
     },
     preparationTime: "" as number | string
   })
@@ -60,7 +60,7 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
   })
 
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useGetActiveMenuCategoriesQuery()
-  
+
   // Debug log to see what categories we're getting
   console.log('Categories data:', categories)
 
@@ -93,23 +93,32 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    /* 
+    // Image is now optional
     if (!formData.image) {
       toast.error("Please upload an image")
       return
     }
+    */
 
     if (!formData.categoryId) {
       toast.error("Please select a category")
       return
     }
-    
+
     try {
       // Convert string values to numbers for API
       const submitData = {
         ...formData,
-        price: typeof formData.price === 'string' ? parseFloat(formData.price) : formData.price,
-        preparationTime: typeof formData.preparationTime === 'string' ? parseInt(formData.preparationTime) : formData.preparationTime
+        price: typeof formData.price === 'string' ? (parseFloat(formData.price) || 0) : formData.price,
+        preparationTime: typeof formData.preparationTime === 'string' ? (parseInt(formData.preparationTime) || 0) : formData.preparationTime,
+        nutritionalInfo: {
+          calories: typeof formData.nutritionalInfo.calories === 'string' ? (parseInt(formData.nutritionalInfo.calories) || 0) : formData.nutritionalInfo.calories,
+          protein: typeof formData.nutritionalInfo.protein === 'string' ? (parseFloat(formData.nutritionalInfo.protein) || 0) : formData.nutritionalInfo.protein,
+          carbs: typeof formData.nutritionalInfo.carbs === 'string' ? (parseFloat(formData.nutritionalInfo.carbs) || 0) : formData.nutritionalInfo.carbs,
+          fat: typeof formData.nutritionalInfo.fat === 'string' ? (parseFloat(formData.nutritionalInfo.fat) || 0) : formData.nutritionalInfo.fat,
+        }
       }
 
       if (itemId) {
@@ -121,9 +130,11 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
       }
       setNewlyUploadedImage(null) // Clear tracking on success
       onClose()
-    } catch (error) {
-      toast.error("Failed to save menu item")
-      
+    } catch (error: any) {
+      console.error("Menu item save error:", error)
+      const errorMessage = error?.data?.error || error?.data?.message || "Failed to save menu item"
+      toast.error(errorMessage)
+
       // Cleanup newly uploaded image if API call failed
       if (newlyUploadedImage) {
         try {
@@ -144,10 +155,10 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
   const handleImageChange = async (newImageUrl: string) => {
     // Track this as a newly uploaded image (for potential rollback)
     setNewlyUploadedImage(newImageUrl)
-    
+
     // Note: ImageUpload component already handles old image deletion via updateImage()
     // so we don't need to delete it here to avoid double deletion
-    
+
     setFormData(prev => ({ ...prev, image: newImageUrl }))
   }
 
@@ -155,7 +166,7 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleNutritionalInfoChange = (field: string, value: number) => {
+  const handleNutritionalInfoChange = (field: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       nutritionalInfo: {
@@ -207,7 +218,7 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
             {itemId ? "Edit Menu Item" : "Create Menu Item"}
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -228,7 +239,7 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
                 id="price"
                 type="text"
                 value={formData.price}
-                onChange={(e) => handleInputChange("price", parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleInputChange("price", e.target.value)}
                 placeholder="0.00"
                 required
               />
@@ -236,14 +247,13 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
               placeholder="Enter item description"
               rows={3}
-              required
             />
           </div>
 
@@ -264,8 +274,8 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
                   <p className="text-sm text-amber-600">No categories available. Please create categories first.</p>
                 </div>
               ) : (
-                <Select 
-                  value={formData.categoryId} 
+                <Select
+                  value={formData.categoryId}
                   onValueChange={(value) => handleInputChange("categoryId", value)}
                 >
                   <SelectTrigger>
@@ -290,14 +300,14 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
               <Input
                 id="preparationTime"
                 value={formData.preparationTime}
-                onChange={(e) => handleInputChange("preparationTime", parseInt(e.target.value) || 0)}
+                onChange={(e) => handleInputChange("preparationTime", e.target.value)}
                 placeholder="0"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image">Image *</Label>
+            <Label htmlFor="image">Image</Label>
             <ImageUpload
               value={formData.image}
               onChange={handleImageChange}
@@ -416,7 +426,7 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
                   type="number"
                   min="0"
                   value={formData.nutritionalInfo.calories}
-                  onChange={(e) => handleNutritionalInfoChange("calories", parseInt(e.target.value) || 0)}
+                  onChange={(e) => handleNutritionalInfoChange("calories", e.target.value)}
                   placeholder="0"
                 />
               </div>
@@ -428,7 +438,7 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
                   min="0"
                   step="0.1"
                   value={formData.nutritionalInfo.protein}
-                  onChange={(e) => handleNutritionalInfoChange("protein", parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleNutritionalInfoChange("protein", e.target.value)}
                   placeholder="0"
                 />
               </div>
@@ -440,7 +450,7 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
                   min="0"
                   step="0.1"
                   value={formData.nutritionalInfo.carbs}
-                  onChange={(e) => handleNutritionalInfoChange("carbs", parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleNutritionalInfoChange("carbs", e.target.value)}
                   placeholder="0"
                 />
               </div>
@@ -452,7 +462,7 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
                   min="0"
                   step="0.1"
                   value={formData.nutritionalInfo.fat}
-                  onChange={(e) => handleNutritionalInfoChange("fat", parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleNutritionalInfoChange("fat", e.target.value)}
                   placeholder="0"
                 />
               </div>

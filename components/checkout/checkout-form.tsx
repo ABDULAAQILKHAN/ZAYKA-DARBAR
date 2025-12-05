@@ -9,21 +9,67 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useForm } from "react-hook-form"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { useCreateOrderMutation } from "@/store/ordersApi"
+import { clearCart } from "@/store/cartSlice"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function CheckoutForm() {
   const [paymentMethod, setPaymentMethod] = useState("card")
   const [couponCode, setCouponCode] = useState("")
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
-  const handleApplyCoupon = async () => {
+  const dispatch = useAppDispatch()
+  const router = useRouter()
+  const items = useAppSelector((state) => state.cart.items)
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+  const [createOrder, { isLoading: isCreating }] = useCreateOrderMutation()
+
+  const { register, handleSubmit, formState: { errors } } = useForm()
+
+  const handleApplyCoupon = async (e: React.MouseEvent) => {
+    e.preventDefault()
     setIsApplyingCoupon(true)
     // Simulate coupon validation
     await new Promise((resolve) => setTimeout(resolve, 1000))
     setIsApplyingCoupon(false)
+    toast.success("Coupon applied!")
+  }
+
+  const onSubmit = async (data: any) => {
+    if (items.length === 0) {
+      toast.error("Your cart is empty")
+      return
+    }
+
+    try {
+      const deliveryAddress = `${data.address}, ${data.city}, ${data.zipCode}`
+
+      await createOrder({
+        items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          id: item.id
+        })),
+        total: total + (total > 30 ? 0 : 3.99) + (total * 0.08), // Recalculate total including tax/delivery
+        delivery_address: deliveryAddress
+      }).unwrap()
+
+      dispatch(clearCart())
+      toast.success("Order placed successfully!")
+      router.push("/orders")
+    } catch (error) {
+      console.error("Failed to place order:", error)
+      toast.error("Failed to place order. Please try again.")
+    }
   }
 
   return (
-    <div className="space-y-6">
+    <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <Card>
           <CardHeader>
@@ -36,20 +82,24 @@ export default function CheckoutForm() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" placeholder="John" />
+                <Input id="firstName" {...register("firstName", { required: true })} placeholder="John" />
+                {errors.firstName && <span className="text-red-500 text-xs">Required</span>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" placeholder="Doe" />
+                <Input id="lastName" {...register("lastName", { required: true })} placeholder="Doe" />
+                {errors.lastName && <span className="text-red-500 text-xs">Required</span>}
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="john@example.com" />
+              <Input id="email" type="email" {...register("email", { required: true })} placeholder="john@example.com" />
+              {errors.email && <span className="text-red-500 text-xs">Required</span>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" />
+              <Input id="phone" type="tel" {...register("phone", { required: true })} placeholder="+1 (555) 123-4567" />
+              {errors.phone && <span className="text-red-500 text-xs">Required</span>}
             </div>
           </CardContent>
         </Card>
@@ -70,21 +120,24 @@ export default function CheckoutForm() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="address">Street Address</Label>
-              <Input id="address" placeholder="123 Main Street" />
+              <Input id="address" {...register("address", { required: true })} placeholder="123 Main Street" />
+              {errors.address && <span className="text-red-500 text-xs">Required</span>}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Input id="city" placeholder="New York" />
+                <Input id="city" {...register("city", { required: true })} placeholder="New York" />
+                {errors.city && <span className="text-red-500 text-xs">Required</span>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="zipCode">ZIP Code</Label>
-                <Input id="zipCode" placeholder="10001" />
+                <Input id="zipCode" {...register("zipCode", { required: true })} placeholder="10001" />
+                {errors.zipCode && <span className="text-red-500 text-xs">Required</span>}
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="instructions">Delivery Instructions (Optional)</Label>
-              <Textarea id="instructions" placeholder="Leave at door, ring bell, etc." rows={3} />
+              <Textarea id="instructions" {...register("instructions")} placeholder="Leave at door, ring bell, etc." rows={3} />
             </div>
           </CardContent>
         </Card>
@@ -167,6 +220,6 @@ export default function CheckoutForm() {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
+    </form>
   )
 }

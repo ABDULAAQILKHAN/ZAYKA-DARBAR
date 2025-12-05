@@ -7,8 +7,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useCart } from "@/hooks/use-cart"
+import { useAppDispatch } from "@/store/hooks"
+import { addToCart } from "@/store/cartSlice"
 import { useGetActiveTodaysSpecialsQuery } from "@/store/offersApi"
+import { toast } from "sonner"
 
 // Fallback data in case API fails
 const fallbackSpecialItems = [
@@ -26,7 +28,7 @@ const fallbackSpecialItems = [
   },
   {
     id: "special2",
-    name: "Paneer Tikka Masala", 
+    name: "Paneer Tikka Masala",
     description: "Grilled cottage cheese in a spiced tomato gravy",
     price: 12.99,
     image: "/placeholder.svg?height=300&width=300",
@@ -39,7 +41,7 @@ const fallbackSpecialItems = [
   {
     id: "special3",
     name: "Chicken Biryani",
-    description: "Fragrant rice dish with chicken and aromatic spices", 
+    description: "Fragrant rice dish with chicken and aromatic spices",
     price: 15.99,
     image: "/placeholder.svg?height=300&width=300",
     category: "Rice",
@@ -78,7 +80,7 @@ const item = {
 }
 
 export default function TodaysSpecial() {
-  const { addItem } = useCart()
+  const dispatch = useAppDispatch()
   const { data: apiSpecials, isLoading, error } = useGetActiveTodaysSpecialsQuery()
 
   // Debug logging
@@ -161,9 +163,9 @@ export default function TodaysSpecial() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Today's Special</h2>
           <p className="text-muted-foreground mt-2">
-            {showFallback ? "Chef's recommendations for the day" : 
-             Array.isArray(apiSpecials) && apiSpecials.length === 0 ? "No specials available today" :
-             "Chef's recommendations for the day"}
+            {showFallback ? "Chef's recommendations for the day" :
+              Array.isArray(apiSpecials) && apiSpecials.length === 0 ? "No specials available today" :
+                "Chef's recommendations for the day"}
           </p>
           {showFallback && (
             <p className="text-xs text-muted-foreground mt-1">
@@ -213,15 +215,16 @@ export default function TodaysSpecial() {
                 <CardFooter className="p-6 pt-0">
                   <Button
                     className="w-full"
-                    onClick={() =>
-                      addItem({
+                    onClick={() => {
+                      dispatch(addToCart({
                         id: specialItem.id,
                         name: specialItem.name,
                         price: specialItem.price,
                         image: specialItem.image,
                         quantity: 1,
-                      })
-                    }
+                      }))
+                      toast.success("Added to cart")
+                    }}
                   >
                     Add to Cart
                   </Button>

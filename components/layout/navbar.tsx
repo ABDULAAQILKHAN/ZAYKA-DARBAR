@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, ShoppingCart, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
-import { useCart } from "@/hooks/use-cart"
+import { useAppSelector } from "@/store/hooks"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -35,6 +35,16 @@ const getNavItems = (userRole?: string, isAuthenticated?: boolean) => {
     baseItems.push({ name: "My orders", href: "/orders" })
   }
 
+  // Staff Routes
+  if (userRole === 'staff') {
+    baseItems.length = 0; // Clear default items for staff if desired, or keep them. Let's keep Menu but add management.
+    // Actually, user requested "Menu Management" and "Order Management"
+    // Let's clear base items to be safe and specific for staff
+    baseItems.length = 0;
+    baseItems.push({ name: "Menu Management", href: "/staff/menu" })
+    baseItems.push({ name: "Order Management", href: "/staff/orders" })
+  }
+
   // Only show Admin if user is admin (hidden for now)
   if (userRole === 'admin') {
     baseItems.length = 0;
@@ -48,12 +58,12 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const pathname = usePathname()
-  const { items } = useCart()
+  const items = useAppSelector((state) => state.cart.items)
   const supabase = createClient()
   const router = useRouter()
   const { user, profile, error: authError, isLoading: authLoading, refreshProfile } = useAuth()
   const navItems = getNavItems(profile?.role, !!user)
-  
+
   useEffect(() => {
     if (authError) {
       toast.error('Error fetching user data')
@@ -132,7 +142,7 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <ModeToggle />
             {profile && profile?.role === 'customer' && (
-                <Link href="/cart">
+              <Link href="/cart">
                 <Button variant="ghost" size="icon" className="relative">
                   <ShoppingCart className="h-5 w-5" />
                   {items.length > 0 && (
@@ -180,7 +190,7 @@ export default function Navbar() {
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {profile && profile?.role === 'customer' &&  <DropdownMenuItem asChild>
+                    {profile && profile?.role === 'customer' && <DropdownMenuItem asChild>
                       <Link href="/orders" className="cursor-pointer">
                         My Orders
                       </Link>
@@ -278,9 +288,9 @@ export default function Navbar() {
                         Profile
                       </Button>
                     </Link>
-                    <Button 
-                      variant="destructive" 
-                      className="w-full" 
+                    <Button
+                      variant="destructive"
+                      className="w-full"
                       onClick={() => {
                         handleSignOut()
                         setIsOpen(false)

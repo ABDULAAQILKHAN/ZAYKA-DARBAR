@@ -1,41 +1,20 @@
 "use client"
 
-import { useState } from "react"
+
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { useCart } from "@/hooks/use-cart"
-// import { useToast } from "@/hooks/use-toast" // Removed
-// import { useToast } from "@/hooks/use-toast"
-// import { useToast } from "@/hooks/use-toast"
+import { useAppSelector } from "@/store/hooks"
 
 export default function OrderSummary() {
-  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
-  const { items, getTotal, clearCart } = useCart()
-  // const { toast } = useToast() // Removed
+  const items = useAppSelector((state) => state.cart.items)
 
-  const subtotal = getTotal()
+  const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
   const deliveryFee = subtotal > 30 ? 0 : 3.99
   const tax = subtotal * 0.08
   const total = subtotal + deliveryFee + tax
-
-  const handlePlaceOrder = async () => {
-    setIsPlacingOrder(true)
-
-    // Simulate order placement
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    // toast({
-    //   title: "Order placed successfully!",
-    //   description: "Your order will be delivered in 30-45 minutes.",
-    // })
-    alert("Order placed successfully! Your order will be delivered in 30-45 minutes.")
-
-    clearCart()
-    setIsPlacingOrder(false)
-  }
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
@@ -86,8 +65,8 @@ export default function OrderSummary() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full" onClick={handlePlaceOrder} disabled={isPlacingOrder || items.length === 0}>
-            {isPlacingOrder ? "Placing Order..." : `Place Order - $${total.toFixed(2)}`}
+          <Button className="w-full" type="submit" form="checkout-form" disabled={items.length === 0}>
+            Place Order - ${total.toFixed(2)}
           </Button>
         </CardFooter>
       </Card>

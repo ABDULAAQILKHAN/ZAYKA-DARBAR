@@ -8,13 +8,13 @@ export function cn(...inputs: ClassValue[]) {
 // Utility function to format dates consistently across server and client
 export function formatOrderDate(dateString: string) {
   const date = new Date(dateString)
-  
+
   // Use consistent formatting to prevent hydration mismatches
   return {
-    date: date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit' 
+    date: date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
     }),
     time: date.toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -26,5 +26,5 @@ export function formatOrderDate(dateString: string) {
 
 // Format currency consistently
 export function formatCurrency(amount: number) {
-  return `$${amount.toFixed(2)}`
+  return `$${amount}`
 }
