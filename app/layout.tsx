@@ -3,8 +3,8 @@ import { Inter as FontSans } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/layout/navbar"
 import Footer from "@/components/layout/footer"
-import { CartProvider } from "@/components/providers/cart-provider"
 import { StoreProvider } from "@/components/providers/store-provider"
+import { CartInitializer } from "@/components/providers/cart-initializer"
 import { AuthProvider } from "@/components/providers/auth-provider"
 import { cn } from "@/lib/utils"
 import "@/app/globals.css"
@@ -17,7 +17,7 @@ const fontSans = FontSans({
 export const metadata = {
   title: "Zayka - Delicious Food Delivered",
   description: "Order delicious food from Zayka darbar",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -31,14 +31,13 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <Toaster position="bottom-center" />
           <StoreProvider>
+            <CartInitializer />
             <AuthProvider>
-              <CartProvider>
-                <div className="relative flex min-h-screen flex-col">
-                  <Navbar />
-                  <main className="flex-1">{children}</main>
-                  <Footer />
-                </div>
-              </CartProvider>
+              <div className="relative flex min-h-screen flex-col">
+                <Navbar />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
             </AuthProvider>
           </StoreProvider>
         </ThemeProvider>

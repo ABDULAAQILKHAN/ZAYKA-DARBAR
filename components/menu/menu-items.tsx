@@ -7,8 +7,10 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useCart } from "@/hooks/use-cart"
+import { useAppDispatch } from "@/store/hooks"
+import { addToCart } from "@/store/cartSlice"
 import { useGetAvailableMenuItemsQuery } from "@/store/menuApi"
+import { toast } from "sonner"
 
 const container = {
   hidden: { opacity: 0 },
@@ -28,7 +30,7 @@ const item = {
 function MenuItemsContent() {
   const searchParams = useSearchParams()
   const [category, setCategory] = useState("")
-  const { addItem } = useCart()
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
     // Only access search params after component mounts
@@ -39,7 +41,7 @@ function MenuItemsContent() {
   const { data: allMenuItems = [], isLoading } = useGetAvailableMenuItemsQuery({
     category: category || undefined
   })
-  
+
   const menuItems = category ? allMenuItems.filter(item => item.categoryId === category) : allMenuItems
 
   if (isLoading) {
@@ -82,15 +84,16 @@ function MenuItemsContent() {
                   <Badge variant="secondary">{item.categoryId}</Badge>
                   <Button
                     size="sm"
-                    onClick={() =>
-                      addItem({
+                    onClick={() => {
+                      dispatch(addToCart({
                         id: item.id,
                         name: item.name,
                         price: item.price,
                         image: item.image,
                         quantity: 1,
-                      })
-                    }
+                      }))
+                      toast.success("Added to cart")
+                    }}
                   >
                     Add to Cart
                   </Button>

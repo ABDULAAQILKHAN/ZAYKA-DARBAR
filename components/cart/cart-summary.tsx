@@ -4,12 +4,12 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { useCart } from "@/hooks/use-cart"
+import { useAppSelector } from "@/store/hooks"
 
 export default function CartSummary() {
-  const { items, getTotal } = useCart()
+  const items = useAppSelector((state) => state.cart.items)
 
-  const subtotal = getTotal()
+  const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
   const deliveryFee = subtotal > 30 ? 0 : 3.99
   const tax = subtotal * 0.08
   const total = subtotal + deliveryFee + tax

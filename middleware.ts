@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
   })
 
   // Create a Supabase client that can authenticated requests
- const supabase:any = createServerClient(
+  const supabase: any = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -51,13 +51,15 @@ export async function middleware(request: NextRequest) {
 
   // Define route groups
   const protectedRoutes = ['/orders', '/admin', '/checkout', '/cart', '/profile']
-  const adminRoutes = ['/admin']
+  const adminRoutes = ['/admin/dashboard', '/admin/users', '/admin/settings'] // More specific admin routes
+  const staffRoutes = ['/admin', '/orders', '/menu'] // Staff can access these
   const authRoutes = ['/auth/login', '/auth/signup']
 
   // Redirect authenticated users from auth pages
   if (user && authRoutes.some(route => pathname.startsWith(route))) {
-    const redirectUrl = userRole === 'admin' ? '/admin' : '/menu'
-    return NextResponse.redirect(new URL(redirectUrl, request.url))
+    if (userRole === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
+    if (userRole === 'staff') return NextResponse.redirect(new URL('/admin', request.url)) // Staff also goes to admin dashboard (or a staff dashboard)
+    return NextResponse.redirect(new URL('/menu', request.url))
   }
 
   // Redirect unauthenticated users from protected pages
@@ -65,9 +67,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Redirect non-admin users from admin pages
-  if (user && userRole !== 'admin' && adminRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.redirect(new URL('/menu', request.url))
+  // Role-based access control
+  if (user) {
+    // Admin-only routes
+    if (adminRoutes.some(route => pathname.startsWith(route)) && userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/menu', request.url))
+    }
+
+    // Staff/Admin routes (e.g. /admin base path might be shared, but specific subpaths restricted)
+    // For now, let's assume /admin is the entry point for both, but we'll restrict content inside the page
+    if (pathname.startsWith('/admin') && userRole !== 'admin' && userRole !== 'staff') {
+      return NextResponse.redirect(new URL('/menu', request.url))
+    }
   }
 
   return response

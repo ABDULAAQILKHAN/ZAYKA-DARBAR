@@ -6,8 +6,10 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useCart } from "@/hooks/use-cart"
+import { useAppDispatch } from "@/store/hooks"
+import { addToCart } from "@/store/cartSlice"
 import { useGetAvailableMenuItemsQuery } from "@/store/menuApi"
+import { toast } from "sonner"
 
 const container = {
   hidden: { opacity: 0 },
@@ -27,7 +29,7 @@ const itemVariants = {
 export default function MenuList() {
   const searchParams = useSearchParams()
   const category = searchParams.get("category") || ""
-  const { addItem } = useCart()
+  const dispatch = useAppDispatch()
 
   const { data: allMenuItems = [], isLoading } = useGetAvailableMenuItemsQuery({
     category: category || undefined
@@ -75,15 +77,16 @@ export default function MenuList() {
                   <Badge variant="secondary">{menuItem.category}</Badge>
                   <Button
                     size="sm"
-                    onClick={() =>
-                      addItem({
+                    onClick={() => {
+                      dispatch(addToCart({
                         id: menuItem.id,
                         name: menuItem.name,
                         price: menuItem.price,
                         image: menuItem.image,
                         quantity: 1,
-                      })
-                    }
+                      }))
+                      toast.success("Added to cart")
+                    }}
                   >
                     Add to Cart
                   </Button>

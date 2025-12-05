@@ -9,54 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatOrderDate, formatCurrency } from "@/lib/utils"
-
-interface Order {
-  id: string
-  items: Array<{
-    name: string
-    quantity: number
-    price: number
-  }>
-  total: number
-  status: "pending" | "preparing" | "ready" | "out-for-delivery" | "delivered"
-  orderDate: string
-  estimatedTime?: string
-  deliveryAddress: string
-}
-
-const mockOrders: Order[] = [
-  {
-    id: "ORD-001",
-    items: [
-      { name: "Butter Chicken", quantity: 1, price: 14.99 },
-      { name: "Garlic Naan", quantity: 2, price: 3.99 },
-    ],
-    total: 22.97,
-    status: "preparing",
-    orderDate: "2024-01-15 14:30",
-    estimatedTime: "15:15",
-    deliveryAddress: "123 Main St, Apt 4B",
-  },
-  {
-    id: "ORD-002",
-    items: [
-      { name: "Paneer Tikka", quantity: 1, price: 7.99 },
-      { name: "Dal Makhani", quantity: 1, price: 11.99 },
-    ],
-    total: 19.98,
-    status: "delivered",
-    orderDate: "2024-01-14 19:20",
-    deliveryAddress: "456 Oak Ave",
-  },
-  {
-    id: "ORD-003",
-    items: [{ name: "Chicken Biryani", quantity: 1, price: 15.99 }],
-    total: 15.99,
-    status: "delivered",
-    orderDate: "2024-01-13 12:45",
-    deliveryAddress: "789 Pine St",
-  },
-]
+import { useGetMyOrdersQuery, type Order } from "@/store/ordersApi"
 
 const statusSteps = [
   { key: "pending", label: "Order Placed", icon: Package },
@@ -68,10 +21,10 @@ const statusSteps = [
 
 export default function OrderTracking() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [orders] = useState<Order[]>(mockOrders)
+  const { data: orders = [], isLoading } = useGetMyOrdersQuery()
 
-  const activeOrders = orders.filter((order) => order.status !== "delivered")
-  const orderHistory = orders.filter((order) => order.status === "delivered")
+  const activeOrders = orders.filter((order) => order.status !== "delivered" && order.status !== "cancelled")
+  const orderHistory = orders.filter((order) => order.status === "delivered" || order.status === "cancelled")
 
   const filteredActiveOrders = activeOrders.filter((order) =>
     order.id.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -81,8 +34,8 @@ export default function OrderTracking() {
     order.id.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const getStatusIndex = (status: string) => {
-    return statusSteps.findIndex((step) => step.key === status)
+  if (isLoading) {
+    return <div className="text-center py-12">Loading orders...</div>
   }
 
   return (
@@ -160,14 +113,14 @@ function OrderCard({ order, showProgress = false }: OrderCardProps) {
               <CardTitle className="text-lg">{order.id}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {(() => {
-                  const formatted = formatOrderDate(order.orderDate)
+                  const formatted = formatOrderDate(order.created_at)
                   return `${formatted.date} at ${formatted.time}`
                 })()}
               </p>
             </div>
             <div className="text-right">
               <p className="font-semibold text-lg">{formatCurrency(order.total)}</p>
-              {order.estimatedTime && <p className="text-sm text-muted-foreground">ETA: {order.estimatedTime}</p>}
+              {order.estimated_completion_time && <p className="text-sm text-muted-foreground">ETA: {new Date(order.estimated_completion_time).toLocaleTimeString()}</p>}
             </div>
           </div>
         </CardHeader>
@@ -190,7 +143,7 @@ function OrderCard({ order, showProgress = false }: OrderCardProps) {
           {/* Delivery Address */}
           <div>
             <h4 className="font-medium mb-1">Delivery Address</h4>
-            <p className="text-sm text-muted-foreground">{order.deliveryAddress}</p>
+            <p className="text-sm text-muted-foreground">{order.delivery_address}</p>
           </div>
 
           {/* Progress Tracker */}
@@ -206,24 +159,21 @@ function OrderCard({ order, showProgress = false }: OrderCardProps) {
                   return (
                     <div key={step.key} className="flex flex-col items-center flex-1">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
-                          isCompleted ? "bg-zayka-600 text-white" : "bg-muted text-muted-foreground"
-                        } ${isCurrent ? "ring-2 ring-zayka-600 ring-offset-2" : ""}`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${isCompleted ? "bg-zayka-600 text-white" : "bg-muted text-muted-foreground"
+                          } ${isCurrent ? "ring-2 ring-zayka-600 ring-offset-2" : ""}`}
                       >
                         <StepIcon className="h-4 w-4" />
                       </div>
                       <span
-                        className={`text-xs text-center ${
-                          isCompleted ? "text-zayka-600 font-medium" : "text-muted-foreground"
-                        }`}
+                        className={`text-xs text-center ${isCompleted ? "text-zayka-600 font-medium" : "text-muted-foreground"
+                          }`}
                       >
                         {step.label}
                       </span>
                       {index < statusSteps.length - 1 && (
                         <div
-                          className={`absolute h-0.5 w-full mt-4 ${
-                            index < currentStatusIndex ? "bg-zayka-600" : "bg-muted"
-                          }`}
+                          className={`absolute h-0.5 w-full mt-4 ${index < currentStatusIndex ? "bg-zayka-600" : "bg-muted"
+                            }`}
                           style={{
                             left: `${(100 / (statusSteps.length - 1)) * index}%`,
                             width: `${100 / (statusSteps.length - 1)}%`,
