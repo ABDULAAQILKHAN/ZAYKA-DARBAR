@@ -41,7 +41,7 @@ export default function CartItems() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
       {items.map((item) => (
-        <motion.div key={item.id} variants={item}>
+        <motion.div key={item.cartItemId} variants={item}>
           <Card>
             <CardContent className="p-6">
               <div className="flex gap-4">
@@ -56,7 +56,7 @@ export default function CartItems() {
 
                 <div className="flex-1">
                   <h3 className="font-medium">{item.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">${item.price.toFixed(2)} each</p>
+                  <p className="text-sm text-muted-foreground mt-1">₹{item.price.toFixed(2)} each</p>
 
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center gap-2">
@@ -64,7 +64,7 @@ export default function CartItems() {
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => dispatch(updateQuantity({ id: item.id, quantity: Math.max(0, item.quantity - 1) }))}
+                        onClick={() => dispatch(updateQuantity({ id: item.cartItemId, quantity: Math.max(0, item.quantity - 1) }))}
                       >
                         <Minus className="h-3 w-3" />
                       </Button>
@@ -73,19 +73,19 @@ export default function CartItems() {
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }))}
+                        onClick={() => dispatch(updateQuantity({ id: item.cartItemId, quantity: item.quantity + 1 }))}
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</span>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => dispatch(removeFromCart(item.id))}
+                        onClick={() => dispatch(removeFromCart(item.cartItemId))}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

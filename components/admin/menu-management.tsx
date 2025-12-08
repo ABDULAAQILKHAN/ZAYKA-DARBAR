@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
-import { Plus, Edit, Trash2, Search, Eye, EyeOff, Clock } from "lucide-react"
+import { Plus, Edit, Trash2, Search, Eye, EyeOff, Clock, SquareDot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -51,7 +51,7 @@ export default function MenuManagement() {
             await deleteImage(imagePath)
           }
         }
-        
+
         await deleteMenuItem(item.id).unwrap()
         toast.success("Menu item deleted successfully!")
       } catch (error) {
@@ -140,8 +140,9 @@ export default function MenuManagement() {
                     )}
                   </div>
                   <div className="absolute top-2 right-2 flex flex-col gap-1">
-                    <Badge variant={item.isVeg ? "outline" : "default"}>
+                    <Badge variant={item.isVeg ? "green" : "destructive"}>
                       {item.isVeg ? "Veg" : "Non-Veg"}
+                      <SquareDot className="h-3 w-3" />
                     </Badge>
                     {item.isSpicy && <Badge variant="destructive">Spicy</Badge>}
                     {item.preparationTime && item.preparationTime as number > 0 && (
@@ -155,10 +156,13 @@ export default function MenuManagement() {
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-semibold">{item.name}</h3>
-                    <span className="font-bold text-zayka-600">${item.price}</span>
+                    <div className="flex flex-col items-end">
+                      <span className="font-bold text-zayka-600">₹{item.fullPrice}</span>
+                      {item.halfPrice && <span className="text-xs text-muted-foreground">Half: ₹{item.halfPrice}</span>}
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{item.description}</p>
-                  
+
                   {/* Ingredients */}
                   {item.ingredients && item.ingredients.length > 0 && (
                     <div className="mb-2">
@@ -207,9 +211,9 @@ export default function MenuManagement() {
                       >
                         {item.isAvailable ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setEditingItemId(item.id)}
                       >
                         <Edit className="h-3 w-3" />

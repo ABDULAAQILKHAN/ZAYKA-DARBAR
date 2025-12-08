@@ -27,10 +27,86 @@ const item = {
   show: { opacity: 1, y: 0 },
 }
 
+function MenuItemCard({ item }: { item: any }) {
+  const dispatch = useAppDispatch()
+  const [size, setSize] = useState<"Full" | "Half">("Full")
+
+  const currentPrice = size === "Full" ? item.fullPrice : (item.halfPrice || item.fullPrice)
+
+  return (
+    <motion.div variants={item} layout>
+      <Card className="overflow-hidden h-full transition-all duration-200 hover:shadow-md flex flex-col">
+        <div className="relative h-48 flex-shrink-0">
+          <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+          <Badge className="absolute top-2 right-2" variant={item.isVeg ? "outline" : "default"}>
+            {item.isVeg ? "Veg" : "Non-Veg"}
+          </Badge>
+          {item.isSpicy && (
+            <Badge className="absolute top-2 left-2" variant="destructive">
+              Spicy
+            </Badge>
+          )}
+        </div>
+        <CardContent className="p-6 flex-1 flex flex-col">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-lg font-bold">{item.name}</h3>
+            <span className="font-medium text-zayka-600 dark:text-zayka-400">
+              ₹{currentPrice.toFixed(2)}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{item.description}</p>
+
+          <div className="mt-auto space-y-4">
+            {item.halfPrice && (
+              <div className="flex items-center space-x-2 bg-secondary/50 p-1 rounded-lg w-fit">
+                <Button
+                  variant={size === "Full" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSize("Full")}
+                  className="rounded-md h-7"
+                >
+                  Full
+                </Button>
+                <Button
+                  variant={size === "Half" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSize("Half")}
+                  className="rounded-md h-7"
+                >
+                  Half
+                </Button>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <Badge variant="secondary" className="truncate max-w-[100px]">{item.categoryId}</Badge>
+              <Button
+                size="sm"
+                onClick={() => {
+                  dispatch(addToCart({
+                    id: item.id,
+                    name: `${item.name} (${size})`,
+                    price: currentPrice,
+                    image: item.image,
+                    quantity: 1,
+                    size: size
+                  }))
+                  toast.success(`Added ${size} ${item.name} to cart`)
+                }}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
+
 function MenuItemsContent() {
   const searchParams = useSearchParams()
   const [category, setCategory] = useState("")
-  const dispatch = useAppDispatch()
 
   useEffect(() => {
     // Only access search params after component mounts
@@ -42,7 +118,10 @@ function MenuItemsContent() {
     category: category || undefined
   })
 
-  const menuItems = category ? allMenuItems.filter(item => item.categoryId === category) : allMenuItems
+  // Filter client-side if needed (though API handles it)
+  const menuItems = category
+    ? allMenuItems.filter(item => item.categoryId === category)
+    : allMenuItems
 
   if (isLoading) {
     return (
@@ -61,46 +140,7 @@ function MenuItemsContent() {
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
       >
         {menuItems.map((item) => (
-          <motion.div key={item.id} variants={item} layout>
-            <Card className="overflow-hidden h-full transition-all duration-200 hover:shadow-md">
-              <div className="relative h-48">
-                <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-                <Badge className="absolute top-2 right-2" variant={item.isVeg ? "outline" : "default"}>
-                  {item.isVeg ? "Veg" : "Non-Veg"}
-                </Badge>
-                {item.isSpicy && (
-                  <Badge className="absolute top-2 left-2" variant="destructive">
-                    Spicy
-                  </Badge>
-                )}
-              </div>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-bold">{item.name}</h3>
-                  <span className="font-medium text-zayka-600 dark:text-zayka-400">${item.price.toFixed(2)}</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">{item.description}</p>
-                <div className="flex items-center justify-between">
-                  <Badge variant="secondary">{item.categoryId}</Badge>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      dispatch(addToCart({
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        image: item.image,
-                        quantity: 1,
-                      }))
-                      toast.success("Added to cart")
-                    }}
-                  >
-                    Add to Cart
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <MenuItemCard key={item.id} item={item} />
         ))}
       </motion.div>
 

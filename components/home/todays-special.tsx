@@ -205,7 +205,7 @@ export default function TodaysSpecial() {
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-bold">{specialItem.name}</h3>
-                    <span className="font-medium text-zayka-600 dark:text-zayka-400">${specialItem.price}</span>
+                    <span className="font-medium text-zayka-600 dark:text-zayka-400">₹{specialItem.price}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mb-2">{specialItem.description}</p>
                   <Badge variant="secondary" className="mt-2">
