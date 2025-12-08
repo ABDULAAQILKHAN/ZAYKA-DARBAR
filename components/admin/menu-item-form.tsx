@@ -34,7 +34,8 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price: "" as number | string,
+    fullPrice: "" as number | string,
+    halfPrice: "" as number | string,
     image: "",
     categoryId: "" as any,
     isVeg: true,
@@ -72,7 +73,8 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
       setFormData({
         name: existingItem.name,
         description: existingItem.description,
-        price: existingItem.price,
+        fullPrice: existingItem.fullPrice,
+        halfPrice: existingItem.halfPrice || "",
         image: existingItem.image,
         categoryId: existingItem.categoryId || existingItem.category,
         isVeg: existingItem.isVeg,
@@ -111,7 +113,8 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
       // Convert string values to numbers for API
       const submitData = {
         ...formData,
-        price: typeof formData.price === 'string' ? (parseFloat(formData.price) || 0) : formData.price,
+        fullPrice: typeof formData.fullPrice === 'string' ? (parseFloat(formData.fullPrice) || 0) : formData.fullPrice,
+        halfPrice: formData.halfPrice ? (typeof formData.halfPrice === 'string' ? (parseFloat(formData.halfPrice) || 0) : formData.halfPrice) : undefined,
         preparationTime: typeof formData.preparationTime === 'string' ? (parseInt(formData.preparationTime) || 0) : formData.preparationTime,
         nutritionalInfo: {
           calories: typeof formData.nutritionalInfo.calories === 'string' ? (parseInt(formData.nutritionalInfo.calories) || 0) : formData.nutritionalInfo.calories,
@@ -234,14 +237,29 @@ export function MenuItemForm({ itemId, onClose }: MenuItemFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="price">Price ($) *</Label>
+              <Label htmlFor="fullPrice">Full Price (₹) *</Label>
               <Input
-                id="price"
-                type="text"
-                value={formData.price}
-                onChange={(e) => handleInputChange("price", e.target.value)}
+                id="fullPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.fullPrice}
+                onChange={(e) => handleInputChange("fullPrice", e.target.value)}
                 placeholder="0.00"
                 required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="halfPrice">Half Price (₹) (Optional)</Label>
+              <Input
+                id="halfPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.halfPrice}
+                onChange={(e) => handleInputChange("halfPrice", e.target.value)}
+                placeholder="0.00"
               />
             </div>
           </div>

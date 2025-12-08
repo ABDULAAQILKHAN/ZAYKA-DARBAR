@@ -26,23 +26,23 @@ export default function CartSummary() {
       <CardContent className="space-y-4">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span>${subtotal.toFixed(2)}</span>
+          <span>₹{subtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
           <span>Delivery Fee</span>
-          <span>{deliveryFee === 0 ? "Free" : `$${deliveryFee.toFixed(2)}`}</span>
+          <span>{deliveryFee === 0 ? "Free" : `₹${deliveryFee.toFixed(2)}`}</span>
         </div>
         <div className="flex justify-between">
           <span>Tax</span>
-          <span>${tax.toFixed(2)}</span>
+          <span>₹{tax.toFixed(2)}</span>
         </div>
         <Separator />
         <div className="flex justify-between font-medium text-lg">
           <span>Total</span>
-          <span>${total.toFixed(2)}</span>
+          <span>₹{total.toFixed(2)}</span>
         </div>
         {deliveryFee > 0 && (
-          <p className="text-xs text-muted-foreground">Add ${(30 - subtotal).toFixed(2)} more for free delivery</p>
+          <p className="text-xs text-muted-foreground">Add ₹{(30 - subtotal).toFixed(2)} more for free delivery</p>
         )}
       </CardContent>
       <CardFooter>

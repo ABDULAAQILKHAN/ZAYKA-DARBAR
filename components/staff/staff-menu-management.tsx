@@ -78,7 +78,12 @@ export default function StaffMenuManagement() {
                                 <TableRow key={item.id}>
                                     <TableCell className="font-medium">{item.name}</TableCell>
                                     <TableCell>{item.category}</TableCell>
-                                    <TableCell>{formatCurrency(item.price)}</TableCell>
+                                    <TableCell>
+                                        <div>
+                                            <div>Full: {formatCurrency(item.fullPrice)}</div>
+                                            {item.halfPrice && <div className="text-xs text-muted-foreground">Half: {formatCurrency(item.halfPrice)}</div>}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>
                                         <Badge variant={item.isAvailable ? "default" : "secondary"}>
                                             {item.isAvailable ? "Available" : "Unavailable"}

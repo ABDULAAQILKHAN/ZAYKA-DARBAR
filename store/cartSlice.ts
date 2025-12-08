@@ -2,10 +2,12 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export interface CartItem {
     id: string
+    cartItemId: string // Unique ID for this specific cart entry (id + size)
     name: string
     price: number
     image: string
     quantity: number
+    size?: string // "Full" | "Half"
 }
 
 interface CartState {
@@ -20,24 +22,34 @@ const cartSlice = createSlice({
     name: 'cart',
     initialState,
     reducers: {
-        addToCart: (state, action: PayloadAction<CartItem>) => {
-            const existingItem = state.items.find((item) => item.id === action.payload.id)
+        addToCart: (state, action: PayloadAction<Omit<CartItem, 'cartItemId'> & { cartItemId?: string }>) => {
+            const newItem = action.payload;
+            // Generate a cartItemId if not provided, based on ID and size
+            const cartItemId = newItem.cartItemId || `${newItem.id}-${newItem.size || 'default'}`;
+
+            const existingItem = state.items.find((item) => item.cartItemId === cartItemId)
+
             if (existingItem) {
-                existingItem.quantity += action.payload.quantity
+                existingItem.quantity += newItem.quantity
             } else {
-                state.items.push(action.payload)
+                state.items.push({
+                    ...newItem,
+                    cartItemId
+                })
             }
             saveToLocalStorage(state)
         },
         removeFromCart: (state, action: PayloadAction<string>) => {
-            state.items = state.items.filter((item) => item.id !== action.payload)
+            // Payload is now cartItemId
+            state.items = state.items.filter((item) => item.cartItemId !== action.payload)
             saveToLocalStorage(state)
         },
         updateQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
-            const item = state.items.find((item) => item.id === action.payload.id)
+            // Payload id is now cartItemId
+            const item = state.items.find((item) => item.cartItemId === action.payload.id)
             if (item) {
                 if (action.payload.quantity === 0) {
-                    state.items = state.items.filter((i) => i.id !== action.payload.id)
+                    state.items = state.items.filter((i) => i.cartItemId !== action.payload.id)
                 } else {
                     item.quantity = action.payload.quantity
                 }

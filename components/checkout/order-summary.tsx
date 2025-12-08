@@ -25,7 +25,7 @@ export default function OrderSummary() {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             {items.map((item) => (
-              <div key={item.id} className="flex gap-3">
+              <div key={item.cartItemId} className="flex gap-3">
                 <div className="relative h-12 w-12 flex-shrink-0">
                   <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover rounded" />
                 </div>
@@ -33,7 +33,7 @@ export default function OrderSummary() {
                   <p className="text-sm font-medium">{item.name}</p>
                   <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                 </div>
-                <p className="text-sm font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                <p className="text-sm font-medium">₹{(item.price * item.quantity).toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -43,20 +43,20 @@ export default function OrderSummary() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Delivery Fee</span>
-              <span>{deliveryFee === 0 ? "Free" : `$${deliveryFee.toFixed(2)}`}</span>
+              <span>{deliveryFee === 0 ? "Free" : `₹${deliveryFee.toFixed(2)}`}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Tax</span>
-              <span>${tax.toFixed(2)}</span>
+              <span>₹{tax.toFixed(2)}</span>
             </div>
             <Separator />
             <div className="flex justify-between font-medium">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>₹{total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -66,7 +66,7 @@ export default function OrderSummary() {
         </CardContent>
         <CardFooter>
           <Button className="w-full" type="submit" form="checkout-form" disabled={items.length === 0}>
-            Place Order - ${total.toFixed(2)}
+            Place Order - ₹{total.toFixed(2)}
           </Button>
         </CardFooter>
       </Card>

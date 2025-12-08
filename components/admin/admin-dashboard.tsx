@@ -20,7 +20,7 @@ const stats = [
   },
   {
     title: "Revenue Today",
-    value: "$1,247",
+    value: "₹1,247",
     change: "+8%",
     icon: DollarSign,
     color: "text-green-600",
@@ -226,7 +226,7 @@ export default function AdminDashboard() {
                         <p className="text-xs text-muted-foreground">{order.items.join(", ")}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${order.total.toFixed(2)}</p>
+                        <p className="font-medium">₹{order.total.toFixed(2)}</p>
                         <p className="text-xs text-muted-foreground">{order.time}</p>
                       </div>
                     </div>

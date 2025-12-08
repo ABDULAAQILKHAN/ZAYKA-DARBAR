@@ -173,7 +173,7 @@ export default function LiveOrders() {
                       </Badge>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">${order.total.toFixed(2)}</p>
+                      <p className="font-semibold">₹{order.total.toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground">{order.paymentMethod}</p>
                     </div>
                   </div>
@@ -193,7 +193,7 @@ export default function LiveOrders() {
                           <span>
                             {item.quantity}x {item.name}
                           </span>
-                          <span>${(item.price * item.quantity).toFixed(2)}</span>
+                          <span>₹{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>

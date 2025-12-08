@@ -50,15 +50,15 @@ export async function middleware(request: NextRequest) {
   const userRole = user?.user_metadata?.role || 'customer'
 
   // Define route groups
-  const protectedRoutes = ['/orders', '/admin', '/checkout', '/cart', '/profile']
+  const protectedRoutes = ['/orders', '/admin', '/staff', '/checkout', '/cart', '/profile']
   const adminRoutes = ['/admin/dashboard', '/admin/users', '/admin/settings'] // More specific admin routes
-  const staffRoutes = ['/admin', '/orders', '/menu'] // Staff can access these
+  // const staffRoutes = ['/admin', '/orders', '/menu'] // Staff can access these
   const authRoutes = ['/auth/login', '/auth/signup']
 
   // Redirect authenticated users from auth pages
   if (user && authRoutes.some(route => pathname.startsWith(route))) {
     if (userRole === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
-    if (userRole === 'staff') return NextResponse.redirect(new URL('/admin', request.url)) // Staff also goes to admin dashboard (or a staff dashboard)
+    if (userRole === 'staff') return NextResponse.redirect(new URL('/staff/menu', request.url)) // Staff goes to staff menu
     return NextResponse.redirect(new URL('/menu', request.url))
   }
 
@@ -74,9 +74,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/menu', request.url))
     }
 
-    // Staff/Admin routes (e.g. /admin base path might be shared, but specific subpaths restricted)
-    // For now, let's assume /admin is the entry point for both, but we'll restrict content inside the page
+    // Admin dashboard access
     if (pathname.startsWith('/admin') && userRole !== 'admin' && userRole !== 'staff') {
+      return NextResponse.redirect(new URL('/menu', request.url))
+    }
+
+    // Staff routes access
+    if (pathname.startsWith('/staff') && userRole !== 'admin' && userRole !== 'staff') {
       return NextResponse.redirect(new URL('/menu', request.url))
     }
   }

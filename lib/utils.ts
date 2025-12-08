@@ -26,5 +26,5 @@ export function formatOrderDate(dateString: string) {
 
 // Format currency consistently
 export function formatCurrency(amount: number) {
-  return `$${amount}`
+  return `₹${amount}`
 }
