@@ -2,8 +2,16 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { User, Mail, Phone, Edit2, Save, X, Camera, Trash2, Loader2 } from "lucide-react"
+import { User, Mail, Phone, Edit2, Save, X, Camera, Trash2, Loader2, MapPin, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import {
+  useGetAddressesQuery,
+  useAddAddressMutation,
+  useDeleteAddressMutation,
+  useSetDefaultAddressMutation
+} from "@/store/addressApi"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,7 +24,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<any>(null)
-  
+
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     firstName: "",
@@ -85,7 +93,7 @@ export default function ProfilePage() {
       console.error("Supabase upload error:", error)
       throw new Error(error.message)
     }
-    
+
     return data.path
   }
   const deleteImage = async (path: string): Promise<void> => {
@@ -139,50 +147,50 @@ export default function ProfilePage() {
       return
     }
 
-  setImgLoading(true)
-  setAvoidProfileImageSync(true)
+    setImgLoading(true)
+    setAvoidProfileImageSync(true)
     const localPreviewUrl = imageUrl
     let uploadedPath: string | null = null
 
     try {
       if (imagePath) {
-        try { await deleteImage(imagePath) } catch (delErr:any) { console.warn('Previous image delete failed', delErr) }
+        try { await deleteImage(imagePath) } catch (delErr: any) { console.warn('Previous image delete failed', delErr) }
       }
       const newPath = await uploadImage(file, user.id)
       uploadedPath = newPath // Track uploaded path for potential cleanup
-      
+
       const { data: publicUrlData } = supabase.storage
         .from('Profile')
         .getPublicUrl(newPath)
 
-        if (!publicUrlData.publicUrl) {
-          throw new Error("Could not get public URL for image.")
-        }
-        
-        const newImageUrl = publicUrlData.publicUrl
+      if (!publicUrlData.publicUrl) {
+        throw new Error("Could not get public URL for image.")
+      }
 
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: { image: newImageUrl, imagePath: newPath }
-        })
+      const newImageUrl = publicUrlData.publicUrl
 
-        if (updateError) {
-          throw updateError
-        }
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { image: newImageUrl, imagePath: newPath }
+      })
 
-        setImageUrl(newImageUrl)
-        setImagePath(newPath)
-        setProfile((prev:any) => prev ? { ...prev, image: newImageUrl, imagePath: newPath } : prev)
-        setFile(null)
-        setImgError("")
-        toast.success("Profile picture updated!")
-        
-        data.refreshProfile()
+      if (updateError) {
+        throw updateError
+      }
+
+      setImageUrl(newImageUrl)
+      setImagePath(newPath)
+      setProfile((prev: any) => prev ? { ...prev, image: newImageUrl, imagePath: newPath } : prev)
+      setFile(null)
+      setImgError("")
+      toast.success("Profile picture updated!")
+
+      data.refreshProfile()
     } catch (err: any) {
       console.error("Upload failed:", err)
       setImgError(err.message || "Failed to upload image.")
       toast.error(err.message || "Failed to upload image.")
       setImageUrl(profile?.image || "")
-      
+
       // Cleanup uploaded image if user update failed
       if (uploadedPath) {
         try {
@@ -218,28 +226,28 @@ export default function ProfilePage() {
 
   const handleDelete = async () => {
     if (!imagePath) return
-    
+
     setImgLoading(true)
     setAvoidProfileImageSync(true)
     try {
       await deleteImage(imagePath)
-      
+
       const { error: updateError } = await supabase.auth.updateUser({
         data: { image: "", imagePath: "" }
       })
-      
+
       if (updateError) {
         throw updateError
       }
 
-  setImageUrl("")
-  setImagePath("")
-  setProfile((prev:any) => prev ? { ...prev, image: "", imagePath: "" } : prev)
+      setImageUrl("")
+      setImagePath("")
+      setProfile((prev: any) => prev ? { ...prev, image: "", imagePath: "" } : prev)
       setFile(null)
       setImgError("")
       toast.success("Profile picture removed.")
-      
-  data.refreshProfile()
+
+      data.refreshProfile()
 
     } catch (err: any) {
       console.error("Delete failed:", err)
@@ -286,6 +294,51 @@ export default function ProfilePage() {
     setIsEditing(false)
   }
 
+  // Address Management Logic
+  const { data: addresses = [], isLoading: isLoadingAddresses } = useGetAddressesQuery(undefined, {
+    skip: !user
+  })
+  const [addAddress, { isLoading: isAdding }] = useAddAddressMutation()
+  const [deleteAddress, { isLoading: isDeleting }] = useDeleteAddressMutation()
+  const [setDefaultAddress, { isLoading: isSettingDefault }] = useSetDefaultAddressMutation()
+
+  const [isAddingAddress, setIsAddingAddress] = useState(false)
+  const [newAddress, setNewAddress] = useState("")
+  const [makeDefault, setMakeDefault] = useState(false)
+
+  const defaultAddress = addresses.find(a => a.isDefault)
+  const otherAddresses = addresses.filter(a => !a.isDefault)
+
+  const handleAddAddress = async () => {
+    try {
+      await addAddress({ value: newAddress, isDefault: makeDefault }).unwrap()
+      toast.success("Address added successfully")
+      setNewAddress("")
+      setMakeDefault(false)
+      setIsAddingAddress(false)
+    } catch (error) {
+      toast.error("Failed to add address")
+    }
+  }
+
+  const handleDeleteAddress = async (index: number) => {
+    try {
+      await deleteAddress(index).unwrap()
+      toast.success("Address deleted")
+    } catch (error) {
+      toast.error("Failed to delete address")
+    }
+  }
+
+  const handleSetDefault = async (index: number) => {
+    try {
+      await setDefaultAddress(index).unwrap()
+      toast.success("Default address updated")
+    } catch (error) {
+      toast.error("Failed to set default address")
+    }
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -304,7 +357,7 @@ export default function ProfilePage() {
         >
           <Card>
             <CardHeader className="text-center">
-              
+
               {/* --- NEW: Improved Image Upload UI --- */}
               <div className="mx-auto w-24 h-24 relative mb-4">
                 {imageUrl ? (
@@ -314,17 +367,17 @@ export default function ProfilePage() {
                     <User className="w-12 h-12 text-zayka-600 dark:text-zayka-400" />
                   </div>
                 )}
-                
-                <label 
-                  htmlFor="profile-upload" 
+
+                <label
+                  htmlFor="profile-upload"
                   className="absolute -bottom-1 -right-1 bg-zayka-600 text-white p-2 rounded-full cursor-pointer hover:bg-zayka-700 transition-colors"
                 >
                   <Camera className="w-4 h-4" />
-                  <input 
-                    id="profile-upload" 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleFileChange} 
+                  <input
+                    id="profile-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
                     className="hidden"
                     ref={fileInputRef}
                     disabled={imgLoading}
@@ -354,7 +407,7 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                 )}
-                
+
                 {!file && imageUrl && (
                   <Button
                     variant="destructive"
@@ -367,9 +420,9 @@ export default function ProfilePage() {
                   </Button>
                 )}
               </div>
-              
+
               {imgError && <p className="text-red-500 mt-2 text-sm">{imgError}</p>}
-              
+
               <CardTitle className="text-2xl pt-4">My Profile</CardTitle>
               <CardDescription>
                 Manage your account information
@@ -435,6 +488,116 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
+
+              {/* Address Management Section */}
+              <div className="pt-6 border-t">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Address Management</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsAddingAddress(true)
+                      setNewAddress("")
+                      setMakeDefault(false)
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Address
+                  </Button>
+                </div>
+
+                {isAddingAddress && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 space-y-3 bg-muted/50 p-4 rounded-lg"
+                  >
+                    <Label>New Address</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={newAddress}
+                        onChange={(e) => setNewAddress(e.target.value)}
+                        className="pl-8"
+                        placeholder="Enter full address"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="make-default" checked={makeDefault} onCheckedChange={setMakeDefault} />
+                      <Label htmlFor="make-default">Set as default address</Label>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setIsAddingAddress(false)}>Cancel</Button>
+                      <Button size="sm" onClick={handleAddAddress} disabled={!newAddress || isAdding}>
+                        {isAdding ? "Adding..." : "Add Address"}
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="space-y-4">
+                  {/* Default Address */}
+                  {defaultAddress && (
+                    <Card className="bg-zayka-50 dark:bg-zayka-900/20 border-zayka-200 dark:border-zayka-800">
+                      <CardContent className="p-4 flex justify-between items-start">
+                        <div className="flex gap-3">
+                          <MapPin className="w-5 h-5 text-zayka-600 mt-0.5" />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">Selected Address (Default)</span>
+                              <Badge variant="secondary" className="text-xs">Default</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{defaultAddress.value}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Other Addresses */}
+                  <div className="space-y-3">
+                    {otherAddresses.map((addr, index) => {
+                      const realIndex = addresses.findIndex(a => a.id === addr.id)
+
+                      return (
+                        <div key={addr.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
+                          <div className="flex gap-3 items-start flex-1">
+                            <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
+                            <p className="text-sm">{addr.value}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs"
+                              onClick={() => handleSetDefault(realIndex)}
+                              disabled={isSettingDefault}
+                            >
+                              Set Default
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDeleteAddress(realIndex)}
+                              disabled={isDeleting}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {!isLoadingAddresses && addresses.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No addresses saved yet.</p>
+                  )}
+                </div>
+              </div>
+
 
               <div className="flex gap-4 pt-4">
                 {isEditing ? (

@@ -6,8 +6,11 @@ import PopularCategories from "@/components/home/popular-categories"
 import Testimonials from "@/components/home/testimonials"
 
 export const metadata: Metadata = {
-  title: "Zayka - Delicious Food Delivered",
+  title: "Zayka darbar - Delicious Food Delivered",
   description: "Order delicious food from Zayka restaurant",
+  icons: {
+    icon: '/icon.jpeg',
+  },
 }
 
 export default function Home() {
