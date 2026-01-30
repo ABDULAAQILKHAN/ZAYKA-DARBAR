@@ -45,7 +45,7 @@ import {
 const formSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    // password: z.string().min(6, "Password must be at least 6 characters"), // Not needed - using Magic Link
 })
 
 interface StaffUser {
@@ -76,7 +76,7 @@ export default function StaffManagement() {
         defaultValues: {
             name: "",
             email: "",
-            password: "",
+            // password: "", // Not needed - using Magic Link
         },
     })
 
@@ -95,7 +95,7 @@ export default function StaffManagement() {
                 throw new Error(data.error || "Failed to create staff")
             }
 
-            toast.success("Staff member created successfully")
+            toast.success("Staff member invited! A magic link has been sent to their email.")
             setIsOpen(false)
             form.reset()
 
@@ -131,7 +131,7 @@ export default function StaffManagement() {
                         <DialogHeader>
                             <DialogTitle>Add New Staff Member</DialogTitle>
                             <DialogDescription>
-                                Create a new account for a staff member. They will be able to log in and manage orders.
+                                Invite a new staff member. They will receive a magic link via email to set up their account and can then log in to manage orders.
                             </DialogDescription>
                         </DialogHeader>
                         <Form {...form}>
@@ -162,6 +162,7 @@ export default function StaffManagement() {
                                         </FormItem>
                                     )}
                                 />
+                                {/* Password field not needed - using Magic Link
                                 <FormField
                                     control={form.control}
                                     name="password"
@@ -175,10 +176,14 @@ export default function StaffManagement() {
                                         </FormItem>
                                     )}
                                 />
+                                */}
+                                <p className="text-sm text-muted-foreground">
+                                    The staff member will receive an email with a magic link to set up their account.
+                                </p>
                                 <DialogFooter>
                                     <Button type="submit" disabled={isLoading}>
                                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Create Account
+                                        Send Invite
                                     </Button>
                                 </DialogFooter>
                             </form>

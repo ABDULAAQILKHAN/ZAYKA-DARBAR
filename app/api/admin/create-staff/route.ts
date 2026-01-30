@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Create the new Staff user using Service Role Key
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const serviceRoleKey = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY
 
     if (!serviceRoleKey) {
         return NextResponse.json({ error: 'Server configuration error: Missing Service Role Key' }, { status: 500 })
@@ -51,27 +51,26 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json()
-        const { email, password, name } = body
+        const { email, name } = body
 
-        if (!email || !password || !name) {
+        if (!email || !name) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        const { data, error } = await supabaseAdmin.auth.admin.createUser({
-            email,
-            password,
-            email_confirm: true,
-            user_metadata: {
+        // Use inviteUserByEmail to send a magic link instead of creating with password
+        const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+            data: {
                 role: 'staff',
                 full_name: name
-            }
+            },
+            redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login`
         })
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 400 })
         }
 
-        return NextResponse.json({ user: data.user }, { status: 201 })
+        return NextResponse.json({ user: data.user, message: 'Invitation sent successfully' }, { status: 201 })
 
     } catch (error) {
         console.error('Error creating staff:', error)
