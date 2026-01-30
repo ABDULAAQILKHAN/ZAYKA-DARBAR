@@ -1,14 +1,16 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useAppDispatch } from "@/store/hooks"
-import { addToCart } from "@/store/cartSlice"
+import { useAppSelector } from "@/store/hooks"
+import { useAddToCartMutation } from "@/store/cartApi"
 import { useGetActiveTodaysSpecialsQuery } from "@/store/offersApi"
 import { toast } from "sonner"
 
@@ -80,8 +82,29 @@ const item = {
 }
 
 export default function TodaysSpecial() {
-  const dispatch = useAppDispatch()
+  const router = useRouter()
+  const token = useAppSelector((state) => state.auth.token)
+  const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation()
   const { data: apiSpecials, isLoading, error } = useGetActiveTodaysSpecialsQuery()
+
+  const handleAddToCart = async (specialItem: any) => {
+    if (!token) {
+      toast.error("Please login to add items to cart")
+      router.push("/auth/login?redirect=/")
+      return
+    }
+
+    try {
+      await addToCart({
+        menuItemId: specialItem.id,
+        quantity: 1,
+        size: "Full"
+      }).unwrap()
+      toast.success("Added to cart")
+    } catch (error) {
+      toast.error("Failed to add item to cart")
+    }
+  }
 
   // Debug logging
   // console.log('TodaysSpecial Debug:', {
@@ -215,18 +238,10 @@ export default function TodaysSpecial() {
                 <CardFooter className="p-6 pt-0">
                   <Button
                     className="w-full"
-                    onClick={() => {
-                      dispatch(addToCart({
-                        id: specialItem.id,
-                        name: specialItem.name,
-                        price: specialItem.price,
-                        image: specialItem.image,
-                        quantity: 1,
-                      }))
-                      toast.success("Added to cart")
-                    }}
+                    disabled={isAddingToCart}
+                    onClick={() => handleAddToCart(specialItem)}
                   >
-                    Add to Cart
+                    {isAddingToCart ? "Adding..." : "Add to Cart"}
                   </Button>
                 </CardFooter>
               </Card>

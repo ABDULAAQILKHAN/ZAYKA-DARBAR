@@ -10,9 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useForm } from "react-hook-form"
-import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { useAppSelector } from "@/store/hooks"
 import { useCreateOrderMutation } from "@/store/ordersApi"
-import { clearCart } from "@/store/cartSlice"
+import { useGetCartQuery, useClearCartMutation, CartItem } from "@/store/cartApi"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -21,12 +21,14 @@ export default function CheckoutForm() {
   const [couponCode, setCouponCode] = useState("")
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
-  const dispatch = useAppDispatch()
   const router = useRouter()
-  const items = useAppSelector((state) => state.cart.items)
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const token = useAppSelector((state) => state.auth.token)
+  const { data: cartData } = useGetCartQuery(undefined, { skip: !token })
+  const items: CartItem[] = Array.isArray(cartData) ? cartData : []
+  const total = items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0)
 
   const [createOrder, { isLoading: isCreating }] = useCreateOrderMutation()
+  const [clearCart] = useClearCartMutation()
 
   const { register, handleSubmit, formState: { errors } } = useForm()
 
@@ -59,7 +61,7 @@ export default function CheckoutForm() {
         delivery_address: deliveryAddress
       }).unwrap()
 
-      dispatch(clearCart())
+      await clearCart().unwrap()
       toast.success("Order placed successfully!")
       router.push("/orders")
     } catch (error) {

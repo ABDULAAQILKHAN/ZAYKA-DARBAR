@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
+import { useAppDispatch } from "@/store/hooks"
+import { setToken, clearToken } from "@/store/authSlice"
 
 interface UserProfile {
   id: string
@@ -34,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<any>(null)
   const supabase = createClient()
+  const dispatch = useAppDispatch()
   const fetchProfile = async (currentUser: User): Promise<UserProfile | null> => {
     try {
       return {
@@ -65,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    dispatch(clearToken())
   }
 
   useEffect(() => {
@@ -76,8 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(session.user)
           const profileData = await fetchProfile(session.user)
           setProfile(profileData)
+          // Sync token to Redux for CartInitializer
+          dispatch(setToken(session.access_token))
         } else {
           console.log('No user session found')
+          dispatch(clearToken())
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
@@ -95,9 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(session.user)
           const profileData = await fetchProfile(session.user)
           setProfile(profileData)
+          // Sync token to Redux for CartInitializer
+          dispatch(setToken(session.access_token))
         } else {
           setUser(null)
           setProfile(null)
+          dispatch(clearToken())
         }
         setIsLoading(false)
       }

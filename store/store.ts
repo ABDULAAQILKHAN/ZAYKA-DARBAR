@@ -4,8 +4,8 @@ import { menuApi } from './menuApi'
 import { offersApi } from './offersApi'
 import { ordersApi } from './ordersApi'
 import { addressApi } from './addressApi'
+import { cartApi } from './cartApi'
 import authReducer from './authSlice'
-import cartReducer from './cartSlice'
 
 export const store = configureStore({
   reducer: {
@@ -14,10 +14,17 @@ export const store = configureStore({
     [offersApi.reducerPath]: offersApi.reducer,
     [ordersApi.reducerPath]: ordersApi.reducer,
     [addressApi.reducerPath]: addressApi.reducer,
+    [cartApi.reducerPath]: cartApi.reducer,
     auth: authReducer,
-    cart: cartReducer,
   },
-  middleware: (getDefault) => getDefault().concat(profileApi.middleware, menuApi.middleware, offersApi.middleware, ordersApi.middleware, addressApi.middleware)
+  middleware: (getDefault) => getDefault().concat(
+    profileApi.middleware, 
+    menuApi.middleware, 
+    offersApi.middleware, 
+    ordersApi.middleware, 
+    addressApi.middleware,
+    cartApi.middleware
+  )
 })
 
 export type RootState = ReturnType<typeof store.getState>

@@ -4,7 +4,6 @@ import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/layout/navbar"
 import Footer from "@/components/layout/footer"
 import { StoreProvider } from "@/components/providers/store-provider"
-import { CartInitializer } from "@/components/providers/cart-initializer"
 import { AuthProvider } from "@/components/providers/auth-provider"
 import { cn } from "@/lib/utils"
 import "@/app/globals.css"
@@ -31,7 +30,6 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <Toaster position="bottom-center" />
           <StoreProvider>
-            <CartInitializer />
             <AuthProvider>
               <div className="relative flex min-h-screen flex-col">
                 <Navbar />
