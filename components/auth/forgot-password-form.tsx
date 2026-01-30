@@ -10,24 +10,43 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-// import { useToast } from "@/hooks/use-toast" // Removed
+import { createClient } from "@/lib/supabase/client"
+import toast from "react-hot-toast"
 
 export default function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  // const { toast } = useToast() // Removed
+  const [email, setEmail] = useState("")
+  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    if (!email.trim()) {
+      toast.error("Please enter your email address")
+      return
+    }
+
     setIsLoading(true)
 
-    // Simulate password reset
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
 
-    alert("Reset link sent! Check your email for password reset instructions.")
+      if (error) {
+        toast.error(error.message || "Failed to send reset link")
+        return
+      }
 
-    setIsLoading(false)
-    setIsSubmitted(true)
+      toast.success("Reset link sent! Check your email.")
+      setIsSubmitted(true)
+    } catch (error) {
+      console.error("Reset password error:", error)
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (isSubmitted) {
@@ -74,7 +93,14 @@ export default function ForgotPasswordForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your.email@example.com" required />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="your.email@example.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+              />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Sending..." : "Send reset link"}

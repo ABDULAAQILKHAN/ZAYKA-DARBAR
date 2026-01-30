@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
@@ -41,6 +41,74 @@ export default function LoginForm() {
   const supabase = createClient()
   const dispatch = useAppDispatch()
   const [createProfile] = useCreateProfileMutation()
+
+  // Handle invite/magic link tokens in URL hash
+  useEffect(() => {
+    const handleTokensInHash = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      const type = hashParams.get('type') // 'invite', 'magiclink', 'recovery', etc.
+      const errorCode = hashParams.get('error_code')
+      const errorDescription = hashParams.get('error_description')
+
+      // Handle error in URL
+      if (errorCode) {
+        const message = errorDescription?.replace(/\+/g, ' ') || 'Authentication failed'
+        toast.error(message)
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname)
+        return
+      }
+
+      // If we have tokens, handle them based on type
+      if (accessToken && refreshToken) {
+        try {
+          // For invite type, redirect to reset-password so staff can set their password
+          if (type === 'invite') {
+            // Redirect to reset-password with the tokens preserved in hash
+            router.push(`/auth/reset-password${window.location.hash}`)
+            return
+          }
+
+          // For other types (magiclink, recovery), set session and redirect
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          })
+
+          if (error) {
+            toast.error(error.message)
+            window.history.replaceState({}, document.title, window.location.pathname)
+            return
+          }
+
+          if (data.session) {
+            // Store token in Redux
+            dispatch(setToken(data.session.access_token))
+            
+            // Get user role and redirect accordingly
+            const role = data.session.user.user_metadata?.role || 'customer'
+            toast.success('Logged in successfully!')
+            
+            if (role === 'admin') {
+              router.push('/admin')
+            } else if (role === 'staff') {
+              router.push('/staff/orders')
+            } else {
+              router.push('/menu')
+            }
+          }
+        } catch (error) {
+          console.error('Error handling auth tokens:', error)
+          toast.error('Authentication failed. Please try again.')
+          window.history.replaceState({}, document.title, window.location.pathname)
+        }
+      }
+    }
+
+    handleTokensInHash()
+  }, [supabase.auth, dispatch, router])
 
   // Email regex pattern
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
