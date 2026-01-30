@@ -68,7 +68,12 @@ export default function OrderSummary() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full" type="submit" form="checkout-form" disabled={items.length === 0}>
+          <Button 
+            className={`w-full ${items.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`} 
+            type="submit" 
+            form="checkout-form" 
+            disabled={items.length === 0}
+          >
             Place Order - ₹{total.toFixed(2)}
           </Button>
         </CardFooter>

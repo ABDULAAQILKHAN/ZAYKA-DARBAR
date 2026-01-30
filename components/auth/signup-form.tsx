@@ -110,9 +110,9 @@ export default function SignupForm() {
     }
     
     setIsLoading(true)
-    //const role = 'customer'
+    const role = 'customer'
     //const role = 'admin' 
-    const role = 'staff' 
+    //const role = 'staff' 
     try {
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
