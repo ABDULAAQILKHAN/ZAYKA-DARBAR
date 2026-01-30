@@ -113,14 +113,15 @@ function OrderCard({ order, showProgress = false }: OrderCardProps) {
               <CardTitle className="text-lg">{order.id}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {(() => {
-                  const formatted = formatOrderDate(order.created_at)
+                  console.log("Dateeee:",order)
+                  const formatted = formatOrderDate(order.createdAt)
                   return `${formatted.date} at ${formatted.time}`
                 })()}
               </p>
             </div>
             <div className="text-right">
               <p className="font-semibold text-lg">{formatCurrency(order.total)}</p>
-              {order.estimated_completion_time && <p className="text-sm text-muted-foreground">ETA: {new Date(order.estimated_completion_time).toLocaleTimeString()}</p>}
+              {order.estimatedCompletionTime && <p className="text-sm text-muted-foreground">ETA: {new Date(order.estimatedCompletionTime).toLocaleTimeString()}</p>}
             </div>
           </div>
         </CardHeader>
@@ -143,7 +144,7 @@ function OrderCard({ order, showProgress = false }: OrderCardProps) {
           {/* Delivery Address */}
           <div>
             <h4 className="font-medium mb-1">Delivery Address</h4>
-            <p className="text-sm text-muted-foreground">{order.delivery_address}</p>
+            <p className="text-sm text-muted-foreground">{order.deliveryAddress}</p>
           </div>
 
           {/* Progress Tracker */}

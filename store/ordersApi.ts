@@ -1,10 +1,21 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
+// API Response wrapper
+interface ApiResponse<T> {
+    success: boolean
+    statusCode: number
+    message: string
+    data: T
+    error: string | null
+}
+
 export interface OrderItem {
+    id: string
     name: string
     quantity: number
     price: number
-    id?: string
+    size?: 'Full' | 'Half'
+    image?: string
 }
 
 export interface Order {
@@ -13,16 +24,19 @@ export interface Order {
     items: OrderItem[]
     total: number
     status: 'pending' | 'preparing' | 'ready' | 'out-for-delivery' | 'delivered' | 'cancelled'
-    created_at: string
-    estimated_completion_time?: string
-    delivery_address: string
-    customer_name?: string // Joined from profiles if needed
+    createdAt: string
+    updatedAt?: string
+    estimatedCompletionTime?: string
+    deliveryAddress: string
+    deliveryInstructions?: string
+    customerName?: string
+    customerPhone?: string
 }
 
+// Minimal payload for creating order - backend will fetch cart and calculate total
 export interface CreateOrderInput {
-    items: OrderItem[]
-    total: number
-    delivery_address: string
+    addressId: string  // Reference to saved address
+    deliveryInstructions?: string
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL as string
@@ -43,6 +57,7 @@ export const ordersApi = createApi({
         // Get all orders (for Admin/Staff)
         getAllOrders: builder.query<Order[], void>({
             query: () => 'orders',
+            transformResponse: (response: ApiResponse<Order[]>) => response.data,
             providesTags: (result) =>
                 result
                     ? [
@@ -54,6 +69,7 @@ export const ordersApi = createApi({
         // Get my orders (for Customer)
         getMyOrders: builder.query<Order[], void>({
             query: () => 'orders/my',
+            transformResponse: (response: ApiResponse<Order[]>) => response.data,
             providesTags: (result) =>
                 result
                     ? [
@@ -62,13 +78,20 @@ export const ordersApi = createApi({
                     ]
                     : [{ type: 'Order', id: 'MY_LIST' }],
         }),
-        // Create new order
+        // Get single order by ID
+        getOrderById: builder.query<Order, string>({
+            query: (id) => `orders/${id}`,
+            transformResponse: (response: ApiResponse<Order>) => response.data,
+            providesTags: (result, error, id) => [{ type: 'Order', id }],
+        }),
+        // Create new order - minimal payload, backend fetches cart
         createOrder: builder.mutation<Order, CreateOrderInput>({
             query: (body) => ({
                 url: 'orders',
                 method: 'POST',
                 body,
             }),
+            transformResponse: (response: ApiResponse<Order>) => response.data,
             invalidatesTags: [{ type: 'Order', id: 'MY_LIST' }, { type: 'Order', id: 'LIST' }],
         }),
         // Update order status (for Admin/Staff)
@@ -78,7 +101,17 @@ export const ordersApi = createApi({
                 method: 'PATCH',
                 body: { status },
             }),
-            invalidatesTags: (result, error, { id }) => [{ type: 'Order', id }],
+            transformResponse: (response: ApiResponse<Order>) => response.data,
+            invalidatesTags: (result, error, { id }) => [{ type: 'Order', id }, { type: 'Order', id: 'LIST' }],
+        }),
+        // Cancel order (for Customer - only if pending)
+        cancelOrder: builder.mutation<Order, string>({
+            query: (id) => ({
+                url: `orders/${id}/cancel`,
+                method: 'POST',
+            }),
+            transformResponse: (response: ApiResponse<Order>) => response.data,
+            invalidatesTags: (result, error, id) => [{ type: 'Order', id }, { type: 'Order', id: 'MY_LIST' }],
         }),
     }),
 })
@@ -86,6 +119,8 @@ export const ordersApi = createApi({
 export const {
     useGetAllOrdersQuery,
     useGetMyOrdersQuery,
+    useGetOrderByIdQuery,
     useCreateOrderMutation,
     useUpdateOrderStatusMutation,
+    useCancelOrderMutation,
 } = ordersApi

@@ -7,10 +7,8 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useAppDispatch } from "@/store/hooks"
-import { addToCart } from "@/store/cartSlice"
 import { useGetAvailableMenuItemsQuery } from "@/store/menuApi"
-import { toast } from "sonner"
+import { AddToCartDialog, AddToCartItem } from "@/components/menu/add-to-cart-dialog"
 
 const container = {
   hidden: { opacity: 0 },
@@ -22,26 +20,25 @@ const container = {
   },
 }
 
-const item = {
+const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 },
 }
 
-function MenuItemCard({ item }: { item: any }) {
-  const dispatch = useAppDispatch()
-  const [size, setSize] = useState<"Full" | "Half">("Full")
-
-  const currentPrice = size === "Full" ? item.fullPrice : (item.halfPrice || item.fullPrice)
+function MenuItemCard({ menuItem, onAddToCart }: { menuItem: any; onAddToCart: (item: AddToCartItem) => void }) {
+  const priceDisplay = menuItem.halfPrice 
+    ? `₹${menuItem.halfPrice} - ₹${menuItem.fullPrice}`
+    : `₹${menuItem.fullPrice}`
 
   return (
-    <motion.div variants={item} layout>
+    <motion.div variants={itemVariants} layout>
       <Card className="overflow-hidden h-full transition-all duration-200 hover:shadow-md flex flex-col">
         <div className="relative h-48 flex-shrink-0">
-          <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-          <Badge className="absolute top-2 right-2" variant={item.isVeg ? "outline" : "default"}>
-            {item.isVeg ? "Veg" : "Non-Veg"}
+          <Image src={menuItem.image || "/placeholder.svg"} alt={menuItem.name} fill className="object-cover" />
+          <Badge className="absolute top-2 right-2" variant={menuItem.isVeg ? "outline" : "default"}>
+            {menuItem.isVeg ? "Veg" : "Non-Veg"}
           </Badge>
-          {item.isSpicy && (
+          {menuItem.isSpicy && (
             <Badge className="absolute top-2 left-2" variant="destructive">
               Spicy
             </Badge>
@@ -49,50 +46,26 @@ function MenuItemCard({ item }: { item: any }) {
         </div>
         <CardContent className="p-6 flex-1 flex flex-col">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-bold">{item.name}</h3>
+            <h3 className="text-lg font-bold">{menuItem.name}</h3>
             <span className="font-medium text-zayka-600 dark:text-zayka-400">
-              ₹{currentPrice.toFixed(2)}
+              {priceDisplay}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{item.description}</p>
+          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{menuItem.description}</p>
 
-          <div className="mt-auto space-y-4">
-            {item.halfPrice && (
-              <div className="flex items-center space-x-2 bg-secondary/50 p-1 rounded-lg w-fit">
-                <Button
-                  variant={size === "Full" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSize("Full")}
-                  className="rounded-md h-7"
-                >
-                  Full
-                </Button>
-                <Button
-                  variant={size === "Half" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSize("Half")}
-                  className="rounded-md h-7"
-                >
-                  Half
-                </Button>
-              </div>
-            )}
-
+          <div className="mt-auto">
             <div className="flex items-center justify-between">
-              <Badge variant="secondary" className="truncate max-w-[100px]">{item.categoryId}</Badge>
+              <Badge variant="secondary" className="truncate max-w-[100px]">{menuItem.categoryId}</Badge>
               <Button
                 size="sm"
-                onClick={() => {
-                  dispatch(addToCart({
-                    id: item.id,
-                    name: `${item.name} (${size})`,
-                    price: currentPrice,
-                    image: item.image,
-                    quantity: 1,
-                    size: size
-                  }))
-                  toast.success(`Added ${size} ${item.name} to cart`)
-                }}
+                onClick={() => onAddToCart({
+                  id: menuItem.id,
+                  name: menuItem.name,
+                  image: menuItem.image,
+                  fullPrice: menuItem.fullPrice,
+                  halfPrice: menuItem.halfPrice,
+                  isVeg: menuItem.isVeg
+                })}
               >
                 Add
               </Button>
@@ -107,6 +80,8 @@ function MenuItemCard({ item }: { item: any }) {
 function MenuItemsContent() {
   const searchParams = useSearchParams()
   const [category, setCategory] = useState("")
+  const [selectedItem, setSelectedItem] = useState<AddToCartItem | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   useEffect(() => {
     // Only access search params after component mounts
@@ -122,6 +97,11 @@ function MenuItemsContent() {
   const menuItems = category
     ? allMenuItems.filter(item => item.categoryId === category)
     : allMenuItems
+
+  const handleAddToCart = (item: AddToCartItem) => {
+    setSelectedItem(item)
+    setDialogOpen(true)
+  }
 
   if (isLoading) {
     return (
@@ -139,8 +119,8 @@ function MenuItemsContent() {
         animate="show"
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
       >
-        {menuItems.map((item) => (
-          <MenuItemCard key={item.id} item={item} />
+        {menuItems.map((menuItem) => (
+          <MenuItemCard key={menuItem.id} menuItem={menuItem} onAddToCart={handleAddToCart} />
         ))}
       </motion.div>
 
@@ -149,6 +129,12 @@ function MenuItemsContent() {
           <p className="text-muted-foreground">No items found in this category.</p>
         </div>
       )}
+
+      <AddToCartDialog
+        item={selectedItem}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   )
 }

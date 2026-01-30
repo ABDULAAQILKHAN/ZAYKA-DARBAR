@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useAppSelector } from "@/store/hooks"
+import { useGetCartQuery, CartItem } from "@/store/cartApi"
 
 export default function CartSummary() {
-  const items = useAppSelector((state) => state.cart.items)
+  const token = useAppSelector((state) => state.auth.token)
+  const { data: cartData } = useGetCartQuery(undefined, { skip: !token })
+  const items: CartItem[] = Array.isArray(cartData) ? cartData : []
 
-  const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
+  const subtotal = items.reduce((total, item) => total + (item.price || 0) * (item.quantity || 0), 0)
   const deliveryFee = subtotal > 30 ? 0 : 3.99
   const tax = subtotal * 0.08
   const total = subtotal + deliveryFee + tax

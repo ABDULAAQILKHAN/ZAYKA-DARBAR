@@ -8,6 +8,7 @@ import { Menu, X, ShoppingCart, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
 import { useAppSelector } from "@/store/hooks"
+import { useGetCartQuery } from "@/store/cartApi"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -58,7 +59,9 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const pathname = usePathname()
-  const items = useAppSelector((state) => state.cart.items)
+  const token = useAppSelector((state) => state.auth.token)
+  const { data: cartData } = useGetCartQuery(undefined, { skip: !token })
+  const cartItems = Array.isArray(cartData) ? cartData : []
   const supabase = createClient()
   const router = useRouter()
   const { user, profile, error: authError, isLoading: authLoading, refreshProfile } = useAuth()
@@ -115,7 +118,7 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center">
             <motion.span
-              className="text-2xl font-bold text-zayka-600 dark:text-zayka-400"
+              className="text-2xl font-bold text-zayka-600 dark:text-zayka-600"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
@@ -145,9 +148,9 @@ export default function Navbar() {
               <Link href="/cart">
                 <Button variant="ghost" size="icon" className="relative">
                   <ShoppingCart className="h-5 w-5" />
-                  {items.length > 0 && (
+                  {cartItems.length > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-zayka-600 text-xs text-white">
-                      {items.length}
+                      {cartItems.length}
                     </span>
                   )}
                 </Button>

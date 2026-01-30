@@ -22,6 +22,12 @@ const authSlice = createSlice({
         }
       }
     },
+    clearToken: (state) => {
+      state.token = null
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token')
+      }
+    },
     loadToken: (state) => {
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('access_token')
@@ -31,5 +37,5 @@ const authSlice = createSlice({
   }
 })
 
-export const { setToken, loadToken } = authSlice.actions
+export const { setToken, clearToken, loadToken } = authSlice.actions
 export default authSlice.reducer

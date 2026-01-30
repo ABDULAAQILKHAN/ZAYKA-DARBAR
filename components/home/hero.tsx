@@ -19,7 +19,7 @@ export default function Hero() {
       </div>
 
       <div className="container relative z-10 mx-auto px-4 py-24 md:py-32 lg:py-40 md:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-[200px] items-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
