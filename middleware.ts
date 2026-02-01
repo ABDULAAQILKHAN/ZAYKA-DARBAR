@@ -49,6 +49,17 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const userRole = user?.user_metadata?.role || 'customer'
 
+  // If user is logged in and on the landing page (root path), redirect them
+  if (user && pathname === '/') {
+    if (userRole === 'admin') {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    } else if (userRole === 'staff') {
+      return NextResponse.redirect(new URL('/admin/orders', request.url))
+    } else {
+      return NextResponse.redirect(new URL('/menu', request.url))
+    }
+  }
+
   // Define route groups
   const protectedRoutes = ['/orders', '/admin', '/staff', '/checkout', '/cart', '/profile']
   const adminRoutes = ['/admin/dashboard', '/admin/users', '/admin/settings'] // More specific admin routes
