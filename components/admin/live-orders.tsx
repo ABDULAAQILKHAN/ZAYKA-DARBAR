@@ -2,111 +2,64 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Clock, CheckCircle, Truck, AlertCircle } from "lucide-react"
+import { Clock, CheckCircle, Truck, AlertCircle, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useGetAllOrdersQuery, useUpdateOrderStatusMutation, type Order } from "@/store/ordersApi"
+import { formatCurrency, formatOrderDate } from "@/lib/utils"
+import { toast } from "sonner"
 
-interface Order {
-  id: string
-  customer: {
-    name: string
-    phone: string
-    address: string
-  }
-  items: Array<{
-    name: string
-    quantity: number
-    price: number
-  }>
-  total: number
-  status: "pending" | "preparing" | "ready" | "out-for-delivery" | "delivered"
-  orderTime: string
-  estimatedTime: string
-  paymentMethod: string
-}
+type OrderStatus = "pending" | "preparing" | "ready" | "out-for-delivery" | "delivered" | "cancelled"
 
-const mockOrders: Order[] = [
-  {
-    id: "ORD-001",
-    customer: {
-      name: "John Doe",
-      phone: "+1 (555) 123-4567",
-      address: "123 Main St, Apt 4B, New York, NY 10001",
-    },
-    items: [
-      { name: "Butter Chicken", quantity: 1, price: 14.99 },
-      { name: "Garlic Naan", quantity: 2, price: 3.99 },
-    ],
-    total: 22.97,
-    status: "preparing",
-    orderTime: "2:30 PM",
-    estimatedTime: "3:15 PM",
-    paymentMethod: "Card",
-  },
-  {
-    id: "ORD-002",
-    customer: {
-      name: "Sarah Smith",
-      phone: "+1 (555) 987-6543",
-      address: "456 Oak Ave, Brooklyn, NY 11201",
-    },
-    items: [
-      { name: "Paneer Tikka", quantity: 1, price: 7.99 },
-      { name: "Dal Makhani", quantity: 1, price: 11.99 },
-      { name: "Butter Naan", quantity: 1, price: 2.99 },
-    ],
-    total: 22.97,
-    status: "ready",
-    orderTime: "2:15 PM",
-    estimatedTime: "3:00 PM",
-    paymentMethod: "PayPal",
-  },
-  {
-    id: "ORD-003",
-    customer: {
-      name: "Mike Johnson",
-      phone: "+1 (555) 456-7890",
-      address: "789 Pine St, Manhattan, NY 10002",
-    },
-    items: [{ name: "Chicken Biryani", quantity: 1, price: 15.99 }],
-    total: 15.99,
-    status: "out-for-delivery",
-    orderTime: "1:45 PM",
-    estimatedTime: "2:30 PM",
-    paymentMethod: "Cash",
-  },
-]
-
-const statusConfig = {
+const statusConfig: Record<OrderStatus, { color: string; icon: typeof Clock; label: string }> = {
   pending: { color: "bg-yellow-500", icon: AlertCircle, label: "Pending" },
   preparing: { color: "bg-blue-500", icon: Clock, label: "Preparing" },
   ready: { color: "bg-green-500", icon: CheckCircle, label: "Ready" },
   "out-for-delivery": { color: "bg-purple-500", icon: Truck, label: "Out for Delivery" },
   delivered: { color: "bg-gray-500", icon: CheckCircle, label: "Delivered" },
+  cancelled: { color: "bg-red-500", icon: AlertCircle, label: "Cancelled" },
 }
 
 export default function LiveOrders() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders)
+  const { data: orders = [], isLoading, isFetching } = useGetAllOrdersQuery(undefined, {
+    pollingInterval: 15000,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  })
+  const [updateOrderStatus] = useUpdateOrderStatusMutation()
   const [filterStatus, setFilterStatus] = useState("all")
 
   const filteredOrders = orders.filter((order) => filterStatus === "all" || order.status === filterStatus)
 
-  const updateOrderStatus = (orderId: string, newStatus: Order["status"]) => {
-    setOrders(orders.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
-    alert(`Order ${orderId} status updated to ${newStatus}`)
+  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
+    try {
+      await updateOrderStatus({ id: orderId, status: newStatus }).unwrap()
+      toast.success(`Order ${orderId} status updated to ${newStatus}`)
+    } catch (error) {
+      toast.error("Failed to update order status")
+    }
   }
 
-  const getNextStatus = (currentStatus: Order["status"]): Order["status"] | null => {
-    const statusFlow: Record<Order["status"], Order["status"] | null> = {
+  const getNextStatus = (currentStatus: OrderStatus): OrderStatus | null => {
+    const statusFlow: Record<OrderStatus, OrderStatus | null> = {
       pending: "preparing",
       preparing: "ready",
       ready: "out-for-delivery",
       "out-for-delivery": "delivered",
       delivered: null,
+      cancelled: null,
     }
     return statusFlow[currentStatus]
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   return (
@@ -114,7 +67,10 @@ export default function LiveOrders() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Live Orders</h1>
-          <p className="text-muted-foreground mt-2">Manage and track current orders</p>
+          <p className="text-muted-foreground mt-2">
+            Manage and track current orders
+            {isFetching && <span className="ml-2 text-xs">(Refreshing...)</span>}
+          </p>
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-full md:w-[200px]">
@@ -127,13 +83,14 @@ export default function LiveOrders() {
             <SelectItem value="ready">Ready</SelectItem>
             <SelectItem value="out-for-delivery">Out for Delivery</SelectItem>
             <SelectItem value="delivered">Delivered</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Order Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Object.entries(statusConfig).map(([status, config]) => {
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {Object.entries(statusConfig).filter(([status]) => status !== 'cancelled').map(([status, config]) => {
           const count = orders.filter((order) => order.status === status).length
           return (
             <Card key={status}>
@@ -152,8 +109,9 @@ export default function LiveOrders() {
       {/* Orders List */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
         {filteredOrders.map((order) => {
-          const config = statusConfig[order.status]
-          const nextStatus = getNextStatus(order.status)
+          const config = statusConfig[order.status as OrderStatus] || statusConfig.pending
+          const nextStatus = getNextStatus(order.status as OrderStatus)
+          const { date, time } = formatOrderDate(order.createdAt)
 
           return (
             <motion.div
@@ -173,8 +131,8 @@ export default function LiveOrders() {
                       </Badge>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">₹{order.total.toFixed(2)}</p>
-                      <p className="text-xs text-muted-foreground">{order.paymentMethod}</p>
+                      <p className="font-semibold">{formatCurrency(order.total)}</p>
+                      <p className="text-xs text-muted-foreground">{order.paymentMethod || 'N/A'}</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -182,9 +140,8 @@ export default function LiveOrders() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <h4 className="font-medium mb-2">Customer Details</h4>
-                      <p className="text-sm">{order.customer.name}</p>
-                      <p className="text-sm text-muted-foreground">{order.customer.phone}</p>
-                      <p className="text-sm text-muted-foreground">{order.customer.address}</p>
+                      <p className="text-sm">{order.customerName || 'N/A'}</p>
+                      <p className="text-sm text-muted-foreground">{order.address || 'No address'}</p>
                     </div>
                     <div>
                       <h4 className="font-medium mb-2">Order Items</h4>
@@ -193,7 +150,7 @@ export default function LiveOrders() {
                           <span>
                             {item.quantity}x {item.name}
                           </span>
-                          <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                          <span>{formatCurrency(item.price * item.quantity)}</span>
                         </div>
                       ))}
                     </div>
@@ -201,11 +158,10 @@ export default function LiveOrders() {
 
                   <div className="flex items-center justify-between pt-3 border-t">
                     <div className="text-sm text-muted-foreground">
-                      <p>Ordered: {order.orderTime}</p>
-                      <p>ETA: {order.estimatedTime}</p>
+                      <p>Ordered: {date} at {time}</p>
                     </div>
-                    {nextStatus && (
-                      <Button onClick={() => updateOrderStatus(order.id, nextStatus)} size="sm">
+                    {nextStatus && order.status !== 'cancelled' && (
+                      <Button onClick={() => handleUpdateStatus(order.id, nextStatus)} size="sm">
                         Mark as {statusConfig[nextStatus].label}
                       </Button>
                     )}

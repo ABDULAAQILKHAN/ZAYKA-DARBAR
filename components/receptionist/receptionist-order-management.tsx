@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useGetAllOrdersQuery, useUpdateOrderStatusMutation, type Order } from "@/store/ordersApi"
+import { useGetAllOrdersQuery, useUpdateOrderStatusMutation } from "@/store/ordersApi"
 import { formatCurrency, formatOrderDate } from "@/lib/utils"
 import {
     Table,
@@ -19,9 +19,8 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Filter } from "lucide-react"
+import { Search, Filter, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -33,14 +32,20 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
     cancelled: "destructive",
 }
 
-export default function OrderManagement() {
-    const { data: orders = [], isLoading } = useGetAllOrdersQuery()
+export default function ReceptionistOrderManagement() {
+    // Polling every 15 seconds
+    const { data: orders = [], isLoading, isFetching } = useGetAllOrdersQuery(undefined, {
+        pollingInterval: 15000,
+        refetchOnFocus: true,
+        refetchOnReconnect: true
+    })
     const [updateStatus] = useUpdateOrderStatusMutation()
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("all")
 
     const filteredOrders = orders.filter((order) => {
-        const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            order.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
         const matchesStatus = statusFilter === "all" || order.status === statusFilter
         return matchesSearch && matchesStatus
     })
@@ -55,17 +60,20 @@ export default function OrderManagement() {
     }
 
     if (isLoading) {
-        return <div>Loading orders...</div>
+        return <div className="flex items-center justify-center h-32">Loading orders...</div>
     }
 
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold tracking-tight">Manage Orders</h2>
+                <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold tracking-tight">Order Monitoring</h2>
+                    {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="relative flex-1 max-w-sm w-full">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search orders..."
@@ -96,7 +104,8 @@ export default function OrderManagement() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Order ID</TableHead>
-                            <TableHead>Date</TableHead>
+                            <TableHead>Date & Time</TableHead>
+                            <TableHead>Customer</TableHead>
                             <TableHead>Items</TableHead>
                             <TableHead>Total</TableHead>
                             <TableHead>Status</TableHead>
@@ -106,14 +115,14 @@ export default function OrderManagement() {
                     <TableBody>
                         {filteredOrders.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
+                                <TableCell colSpan={7} className="h-24 text-center">
                                     No orders found.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             filteredOrders.map((order) => (
                                 <TableRow key={order.id}>
-                                    <TableCell className="font-medium">{order.id}</TableCell>
+                                    <TableCell className="font-medium">{order.id.substring(0, 8)}...</TableCell>
                                     <TableCell>
                                         {(() => {
                                             const { date, time } = formatOrderDate(order.createdAt)
@@ -126,12 +135,18 @@ export default function OrderManagement() {
                                         })()}
                                     </TableCell>
                                     <TableCell>
+                                        {order.customerName || "Walk-in"}
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="flex flex-col gap-1">
-                                            {order.items.map((item, i) => (
+                                            {order.items.slice(0, 3).map((item, i) => (
                                                 <span key={i} className="text-sm">
                                                     {item.quantity}x {item.name}
                                                 </span>
                                             ))}
+                                            {order.items.length > 3 && (
+                                                <span className="text-xs text-muted-foreground">+{order.items.length - 3} more</span>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>{formatCurrency(order.total)}</TableCell>

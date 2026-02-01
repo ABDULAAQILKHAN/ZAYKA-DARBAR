@@ -9,6 +9,13 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
     Card,
     CardContent,
     CardDescription,
@@ -46,7 +53,7 @@ import { Badge } from "@/components/ui/badge"
 const formSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
-    // password: z.string().min(6, "Password must be at least 6 characters"), // Not needed - using Magic Link
+    role: z.enum(["staff", "receptionist"]),
 })
 
 interface StaffUser {
@@ -96,7 +103,7 @@ export default function StaffManagement() {
         defaultValues: {
             name: "",
             email: "",
-            // password: "", // Not needed - using Magic Link
+            role: "staff",
         },
     })
 
@@ -129,6 +136,27 @@ export default function StaffManagement() {
         }
     }
 
+    async function onDelete(userId: string) {
+        if (!confirm("Are you sure you want to delete this user?")) return
+
+        try {
+            const response = await fetch(`/api/admin/delete-user?id=${userId}`, {
+                method: "DELETE",
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to delete user")
+            }
+
+            toast.success("User deleted successfully")
+            fetchStaffList()
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to delete user")
+        }
+    }
+
     const getStatusBadge = (staff: StaffUser) => {
         if (staff.is_banned) {
             return (
@@ -158,9 +186,9 @@ export default function StaffManagement() {
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Staff Management</CardTitle>
+                    <CardTitle>Employee Management</CardTitle>
                     <CardDescription>
-                        Manage staff members who can process orders and update menu availability.
+                        Manage staff and receptionists.
                     </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
@@ -174,42 +202,64 @@ export default function StaffManagement() {
                                 Add Staff
                             </Button>
                         </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add New Staff Member</DialogTitle>
-                            <DialogDescription>
-                                Invite a new staff member. They will receive a magic link via email to set up their account and can then log in to manage orders.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Full Name</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="John Doe" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Email</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="john@example.com" type="email" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                {/* Password field not needed - using Magic Link
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add New Employee</DialogTitle>
+                                <DialogDescription>
+                                    Invite a new team member. They will receive a magic link via email to set up their account.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Full Name</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="John Doe" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Email</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="john@example.com" type="email" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="role"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Role</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select a role" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="staff">Staff</SelectItem>
+                                                        <SelectItem value="receptionist">Receptionist</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {/* Password field not needed - using Magic Link
                                 <FormField
                                     control={form.control}
                                     name="password"
@@ -224,19 +274,19 @@ export default function StaffManagement() {
                                     )}
                                 />
                                 */}
-                                <p className="text-sm text-muted-foreground">
-                                    The staff member will receive an email with a magic link to set up their account.
-                                </p>
-                                <DialogFooter>
-                                    <Button type="submit" disabled={isLoading}>
-                                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Send Invite
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </Form>
-                    </DialogContent>
-                </Dialog>
+                                    <p className="text-sm text-muted-foreground">
+                                        The user will receive an email with a magic link to set up their account.
+                                    </p>
+                                    <DialogFooter>
+                                        <Button type="submit" disabled={isLoading}>
+                                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Send Invite
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </CardHeader>
             <CardContent>
@@ -245,62 +295,62 @@ export default function StaffManagement() {
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                 ) : (
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Created At</TableHead>
-                                <TableHead>Last Login</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {staffList.length === 0 ? (
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={7} className="h-24 text-center">
-                                        No staff members found. Click "Add Staff" to invite a new team member.
-                                    </TableCell>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>Role</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Created At</TableHead>
+                                    <TableHead>Last Login</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ) : (
-                                staffList.map((staff) => (
-                                    <TableRow key={staff.id}>
-                                        <TableCell className="font-medium">
-                                            {staff.full_name}
-                                        </TableCell>
-                                        <TableCell>{staff.email}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <UserCog className="h-4 w-4 text-muted-foreground" />
-                                                <span className="capitalize">{staff.role}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {getStatusBadge(staff)}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(staff.created_at).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>
-                                            {staff.last_sign_in_at 
-                                                ? new Date(staff.last_sign_in_at).toLocaleDateString()
-                                                : <span className="text-muted-foreground">Never</span>
-                                            }
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" disabled>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                            </TableHeader>
+                            <TableBody>
+                                {staffList.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="h-24 text-center">
+                                            No staff members found. Click "Add Staff" to invite a new team member.
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                                ) : (
+                                    staffList.map((staff) => (
+                                        <TableRow key={staff.id}>
+                                            <TableCell className="font-medium">
+                                                {staff.full_name}
+                                            </TableCell>
+                                            <TableCell>{staff.email}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <UserCog className="h-4 w-4 text-muted-foreground" />
+                                                    <span className="capitalize">{staff.role}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {getStatusBadge(staff)}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(staff.created_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {staff.last_sign_in_at
+                                                    ? new Date(staff.last_sign_in_at).toLocaleDateString()
+                                                    : <span className="text-muted-foreground">Never</span>
+                                                }
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" onClick={() => onDelete(staff.id)}>
+                                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 )}
             </CardContent>
         </Card>

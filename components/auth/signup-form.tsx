@@ -20,6 +20,7 @@ interface FormData {
   email: string
   phone: string
   password: string
+  confirmPassword: string
 }
 
 interface ValidationErrors {
@@ -28,6 +29,7 @@ interface ValidationErrors {
   email?: string
   phone?: string
   password?: string
+  confirmPassword?: string
 }
 
 export default function SignupForm() {
@@ -39,17 +41,19 @@ export default function SignupForm() {
     email: "",
     phone: "",
     password: "",
+    confirmPassword: "",
   })
   const [errors, setErrors] = useState<ValidationErrors>({})
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
   // Email regex pattern
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  
+
   // Password regex - at least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-  
+
   // Phone regex - basic US phone format
   const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/
 
@@ -72,6 +76,9 @@ export default function SignupForm() {
           return "Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character"
         }
         return undefined
+      case "confirmPassword":
+        if (!value) return "Please confirm your password"
+        return undefined
       default:
         return undefined
     }
@@ -79,7 +86,7 @@ export default function SignupForm() {
 
   const handleInputChange = (name: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }))
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: undefined }))
@@ -88,7 +95,7 @@ export default function SignupForm() {
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {}
-    
+
     Object.keys(formData).forEach(key => {
       const fieldName = key as keyof FormData
       const error = validateField(fieldName, formData[fieldName])
@@ -97,18 +104,23 @@ export default function SignupForm() {
       }
     })
 
+    // Check if passwords match
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match"
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       toast.error("Please fix the errors below")
       return
     }
-    
+
     setIsLoading(true)
     const role = 'customer'
     //const role = 'admin' 
@@ -158,13 +170,13 @@ export default function SignupForm() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First name</Label>
-                <Input 
-                  id="firstName" 
-                  placeholder="John" 
+                <Input
+                  id="firstName"
+                  placeholder="John"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange("firstName", e.target.value)}
                   className={errors.firstName ? "border-red-500" : ""}
-                  required 
+                  required
                 />
                 {errors.firstName && (
                   <p className="text-sm text-red-500">{errors.firstName}</p>
@@ -172,13 +184,13 @@ export default function SignupForm() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last name</Label>
-                <Input 
-                  id="lastName" 
-                  placeholder="Doe" 
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange("lastName", e.target.value)}
                   className={errors.lastName ? "border-red-500" : ""}
-                  required 
+                  required
                 />
                 {errors.lastName && (
                   <p className="text-sm text-red-500">{errors.lastName}</p>
@@ -187,14 +199,14 @@ export default function SignupForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="your.email@example.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 className={errors.email ? "border-red-500" : ""}
-                required 
+                required
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email}</p>
@@ -202,14 +214,14 @@ export default function SignupForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone number</Label>
-              <Input 
-                id="phone" 
-                type="tel" 
-                placeholder="+1 (555) 123-4567" 
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1 (555) 123-4567"
                 value={formData.phone}
                 onChange={(e) => handleInputChange("phone", e.target.value)}
                 className={errors.phone ? "border-red-500" : ""}
-                required 
+                required
               />
               {errors.phone && (
                 <p className="text-sm text-red-500">{errors.phone}</p>
@@ -218,14 +230,14 @@ export default function SignupForm() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="••••••••" 
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => handleInputChange("password", e.target.value)}
                   className={errors.password ? "border-red-500" : ""}
-                  required 
+                  required
                 />
                 <Button
                   type="button"
@@ -248,6 +260,37 @@ export default function SignupForm() {
               <p className="text-xs text-muted-foreground">
                 Password must be at least 8 characters with uppercase, lowercase, number, and special character
               </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                  className={errors.confirmPassword ? "border-red-500" : ""}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="sr-only">{showConfirmPassword ? "Hide password" : "Show password"}</span>
+                </Button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Create account"}
