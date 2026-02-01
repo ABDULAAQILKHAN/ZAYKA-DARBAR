@@ -51,16 +51,20 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json()
-        const { email, name } = body
+        const { email, name, role = 'staff' } = body
 
         if (!email || !name) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
+        if (role !== 'staff' && role !== 'receptionist') {
+            return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+        }
+
         // Use inviteUserByEmail to send a magic link instead of creating with password
         const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
             data: {
-                role: 'staff',
+                role: role,
                 full_name: name
             },
             redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login`

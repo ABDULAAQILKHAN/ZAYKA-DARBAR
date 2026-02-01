@@ -489,114 +489,116 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Address Management Section */}
-              <div className="pt-6 border-t">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Address Management</h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setIsAddingAddress(true)
-                      setNewAddress("")
-                      setMakeDefault(false)
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Address
-                  </Button>
-                </div>
-
-                {isAddingAddress && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mb-4 space-y-3 bg-muted/50 p-4 rounded-lg"
-                  >
-                    <Label>New Address</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={newAddress}
-                        onChange={(e) => setNewAddress(e.target.value)}
-                        className="pl-8"
-                        placeholder="Enter full address"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch id="make-default" checked={makeDefault} onCheckedChange={setMakeDefault} />
-                      <Label htmlFor="make-default">Set as default address</Label>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setIsAddingAddress(false)}>Cancel</Button>
-                      <Button size="sm" onClick={handleAddAddress} disabled={!newAddress || isAdding}>
-                        {isAdding ? "Adding..." : "Add Address"}
-                      </Button>
-                    </div>
-                  </motion.div>
-                )}
-
-                <div className="space-y-4">
-                  {/* Default Address */}
-                  {defaultAddress && (
-                    <Card className="bg-zayka-50 dark:bg-zayka-900/20 border-zayka-200 dark:border-zayka-800">
-                      <CardContent className="p-4 flex justify-between items-start">
-                        <div className="flex gap-3">
-                          <MapPin className="w-5 h-5 text-zayka-600 mt-0.5" />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Selected Address (Default)</span>
-                              <Badge variant="secondary" className="text-xs">Default</Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1">{defaultAddress.value}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Other Addresses */}
-                  <div className="space-y-3">
-                    {otherAddresses.map((addr, index) => {
-                      const realIndex = addresses.findIndex(a => a.id === addr.id)
-
-                      return (
-                        <div key={addr.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
-                          <div className="flex gap-3 items-start flex-1">
-                            <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
-                            <p className="text-sm">{addr.value}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-xs"
-                              onClick={() => handleSetDefault(realIndex)}
-                              disabled={isSettingDefault}
-                            >
-                              Set Default
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleDeleteAddress(realIndex)}
-                              disabled={isDeleting}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      )
-                    })}
+              {/* Address Management Section - Only for customers */}
+              {profile?.role === 'customer' && (
+                <div className="pt-6 border-t">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Address Management</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setIsAddingAddress(true)
+                        setNewAddress("")
+                        setMakeDefault(false)
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Address
+                    </Button>
                   </div>
 
-                  {!isLoadingAddresses && addresses.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">No addresses saved yet.</p>
+                  {isAddingAddress && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mb-4 space-y-3 bg-muted/50 p-4 rounded-lg"
+                    >
+                      <Label>New Address</Label>
+                      <div className="relative">
+                        <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={newAddress}
+                          onChange={(e) => setNewAddress(e.target.value)}
+                          className="pl-8"
+                          placeholder="Enter full address"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch id="make-default" checked={makeDefault} onCheckedChange={setMakeDefault} />
+                        <Label htmlFor="make-default">Set as default address</Label>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setIsAddingAddress(false)}>Cancel</Button>
+                        <Button size="sm" onClick={handleAddAddress} disabled={!newAddress || isAdding}>
+                          {isAdding ? "Adding..." : "Add Address"}
+                        </Button>
+                      </div>
+                    </motion.div>
                   )}
+
+                  <div className="space-y-4">
+                    {/* Default Address */}
+                    {defaultAddress && (
+                      <Card className="bg-zayka-50 dark:bg-zayka-900/20 border-zayka-200 dark:border-zayka-800">
+                        <CardContent className="p-4 flex justify-between items-start">
+                          <div className="flex gap-3">
+                            <MapPin className="w-5 h-5 text-zayka-600 mt-0.5" />
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">Selected Address (Default)</span>
+                                <Badge variant="secondary" className="text-xs">Default</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">{defaultAddress.value}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Other Addresses */}
+                    <div className="space-y-3">
+                      {otherAddresses.map((addr, index) => {
+                        const realIndex = addresses.findIndex(a => a.id === addr.id)
+
+                        return (
+                          <div key={addr.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
+                            <div className="flex gap-3 items-start flex-1">
+                              <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
+                              <p className="text-sm">{addr.value}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 text-xs"
+                                onClick={() => handleSetDefault(realIndex)}
+                                disabled={isSettingDefault}
+                              >
+                                Set Default
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteAddress(realIndex)}
+                                disabled={isDeleting}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {!isLoadingAddresses && addresses.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">No addresses saved yet.</p>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
 
               <div className="flex gap-4 pt-4">

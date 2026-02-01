@@ -86,11 +86,11 @@ export default function LoginForm() {
           if (data.session) {
             // Store token in Redux
             dispatch(setToken(data.session.access_token))
-            
+
             // Get user role and redirect accordingly
             const role = data.session.user.user_metadata?.role || 'customer'
             toast.success('Logged in successfully!')
-            
+
             if (role === 'admin') {
               router.push('/admin')
             } else if (role === 'staff') {
@@ -128,7 +128,7 @@ export default function LoginForm() {
 
   const handleInputChange = (name: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }))
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: undefined }))
@@ -137,7 +137,7 @@ export default function LoginForm() {
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {}
-    
+
     Object.keys(formData).forEach(key => {
       const fieldName = key as keyof FormData
       const error = validateField(fieldName, formData[fieldName])
@@ -152,12 +152,12 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       toast.error("Please fix the errors below")
       return
     }
-    
+
     setIsLoading(true)
 
     try {
@@ -195,21 +195,23 @@ export default function LoginForm() {
             updatedAt: new Date().toISOString(),
           }).unwrap()
         } catch (e: any) {
-          if(e.status !== 409) {
+          if (e.status !== 409) {
             console.warn('Profile creation failed (non-blocking):', e.status)
             return
           }
         }
 
         const userRole = data.user.user_metadata?.role || 'customer'
-        
+
         // Conditional routing based on role
-  if (userRole === 'customer') {
+        if (userRole === 'customer') {
           router.push("/menu")
         } else if (userRole === 'admin') {
           router.push("/admin")
         } else if (userRole === 'staff') {
           router.push("/admin/orders")
+        } else if (userRole === 'receptionist') {
+          router.push("/receptionist/orders")
         } else {
           // Default fallback
           router.push("/")
@@ -236,14 +238,14 @@ export default function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="your.email@example.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 className={errors.email ? "border-red-500" : ""}
-                required 
+                required
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email}</p>
@@ -260,14 +262,14 @@ export default function LoginForm() {
                 </Link>
               </div>
               <div className="relative">
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="••••••••" 
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => handleInputChange("password", e.target.value)}
                   className={errors.password ? "border-red-500" : ""}
-                  required 
+                  required
                 />
                 <Button
                   type="button"

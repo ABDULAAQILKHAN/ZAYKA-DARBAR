@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
-export async function GET() {
+export async function DELETE(request: Request) {
     const cookieStore = cookies()
 
     // 1. Verify the current user is an Admin
@@ -31,7 +31,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 2. List users using Service Role Key
+    // 2. Delete user using Service Role Key
     const serviceRoleKey = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY
 
     if (!serviceRoleKey) {
@@ -50,44 +50,23 @@ export async function GET() {
     )
 
     try {
-        // Fetch all users
-        const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-            perPage: 100,
-        })
+        const { searchParams } = new URL(request.url)
+        const userId = searchParams.get('id')
+
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+        }
+
+        const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 400 })
         }
 
-        // Filter only staff and receptionist users
-        const staffUsers = data.users.filter(
-            (u) => u.user_metadata?.role === 'staff' || u.user_metadata?.role === 'receptionist'
-        ).map((u) => {
-
-            // Access banned_until through unknown cast (exists in API but not in types)
-            const userObj = u as unknown as { banned_until?: string }
-            const isBanned = userObj.banned_until
-                ? new Date(userObj.banned_until) > new Date()
-                : false
-
-            return {
-                id: u.id,
-                email: u.email,
-                full_name: u.user_metadata?.full_name || 'N/A',
-                role: u.user_metadata?.role || 'staff',
-                created_at: u.created_at,
-                last_sign_in_at: u.last_sign_in_at,
-                email_confirmed_at: u.email_confirmed_at,
-                // User is active if they have confirmed email OR have signed in at least once
-                is_active: !!(u.email_confirmed_at || u.last_sign_in_at),
-                is_banned: isBanned,
-            }
-        })
-
-        return NextResponse.json({ users: staffUsers }, { status: 200 })
+        return NextResponse.json({ message: 'User deleted successfully' }, { status: 200 })
 
     } catch (error) {
-        console.error('Error listing staff:', error)
+        console.error('Error deleting user:', error)
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
     }
 }

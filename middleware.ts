@@ -49,8 +49,21 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const userRole = user?.user_metadata?.role || 'customer'
 
+  // If user is logged in and on the landing page (root path), redirect them
+  if (user && pathname === '/') {
+    if (userRole === 'admin') {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    } else if (userRole === 'staff') {
+      return NextResponse.redirect(new URL('/staff/menu', request.url))
+    } else if (userRole === 'receptionist') {
+      return NextResponse.redirect(new URL('/receptionist/orders', request.url))
+    } else {
+      return NextResponse.redirect(new URL('/menu', request.url))
+    }
+  }
+
   // Define route groups
-  const protectedRoutes = ['/orders', '/admin', '/staff', '/checkout', '/cart', '/profile']
+  const protectedRoutes = ['/orders', '/admin', '/staff', '/receptionist', '/checkout', '/cart', '/profile']
   const adminRoutes = ['/admin/dashboard', '/admin/users', '/admin/settings'] // More specific admin routes
   // const staffRoutes = ['/admin', '/orders', '/menu'] // Staff can access these
   const authRoutes = ['/auth/login', '/auth/signup']
@@ -59,6 +72,7 @@ export async function middleware(request: NextRequest) {
   if (user && authRoutes.some(route => pathname.startsWith(route))) {
     if (userRole === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
     if (userRole === 'staff') return NextResponse.redirect(new URL('/staff/menu', request.url)) // Staff goes to staff menu
+    if (userRole === 'receptionist') return NextResponse.redirect(new URL('/receptionist/orders', request.url))
     return NextResponse.redirect(new URL('/menu', request.url))
   }
 
@@ -74,13 +88,18 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/menu', request.url))
     }
 
-    // Admin dashboard access
-    if (pathname.startsWith('/admin') && userRole !== 'admin' && userRole !== 'staff') {
+    // Admin dashboard access (admin only)
+    if (pathname.startsWith('/admin') && userRole !== 'admin') {
       return NextResponse.redirect(new URL('/menu', request.url))
     }
 
     // Staff routes access
     if (pathname.startsWith('/staff') && userRole !== 'admin' && userRole !== 'staff') {
+      return NextResponse.redirect(new URL('/menu', request.url))
+    }
+
+    // Receptionist routes access
+    if (pathname.startsWith('/receptionist') && userRole !== 'admin' && userRole !== 'receptionist') {
       return NextResponse.redirect(new URL('/menu', request.url))
     }
   }
