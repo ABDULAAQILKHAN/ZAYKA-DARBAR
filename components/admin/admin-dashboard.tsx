@@ -5,123 +5,119 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChefHat, ShoppingBag, Clock, DollarSign, Plus, Settings } from "lucide-react"
+import { ChefHat, ShoppingBag, Clock, DollarSign, Plus } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import StaffManagement from "./staff-management"
 import OrderManagement from "./order-management"
-
-const stats = [
-  {
-    title: "Total Orders Today",
-    value: "47",
-    change: "+12%",
-    icon: ShoppingBag,
-    color: "text-blue-600",
-  },
-  {
-    title: "Revenue Today",
-    value: "₹1,247",
-    change: "+8%",
-    icon: DollarSign,
-    color: "text-green-600",
-  },
-  {
-    title: "Active Orders",
-    value: "8",
-    change: "Live",
-    icon: Clock,
-    color: "text-orange-600",
-  },
-  {
-    title: "Menu Items",
-    value: "42",
-    change: "Active",
-    icon: ChefHat,
-    color: "text-purple-600",
-  },
-]
-
-const quickActions = [
-  {
-    title: "Offers & Specials",
-    description: "Manage special offers and today's specials",
-    href: "/admin/offers",
-    icon: Plus,
-    color: "bg-zayka-600 hover:bg-zayka-700",
-  },
-  {
-    title: "Manage Orders",
-    description: "View and manage live orders",
-    href: "/admin/orders",
-    icon: ShoppingBag,
-    color: "bg-blue-600 hover:bg-blue-700",
-  },
-  {
-    title: "Menu Management",
-    description: "Edit existing menu items",
-    href: "/admin/menu",
-    icon: ChefHat,
-    color: "bg-green-600 hover:bg-green-700",
-  },
-  {
-    title: "Category Management",
-    description: "Manage menu categories",
-    href: "/admin/categories",
-    icon: ShoppingBag, // Using ShoppingBag as a placeholder, or could import List or similar
-    color: "bg-purple-600 hover:bg-purple-700",
-  },
-  // {
-  //   title: "Settings",
-  //   description: "Restaurant settings and preferences",
-  //   href: "/admin/settings",
-  //   icon: Settings,
-  //   color: "bg-gray-600 hover:bg-gray-700",
-  // },
-]
-
-const recentOrders = [
-  {
-    id: "ORD-001",
-    customer: "John Doe",
-    items: ["Butter Chicken", "Garlic Naan"],
-    total: 18.98,
-    status: "preparing",
-    time: "5 min ago",
-  },
-  {
-    id: "ORD-002",
-    customer: "Sarah Smith",
-    items: ["Paneer Tikka", "Dal Makhani"],
-    total: 24.98,
-    status: "ready",
-    time: "12 min ago",
-  },
-  {
-    id: "ORD-003",
-    customer: "Mike Johnson",
-    items: ["Chicken Biryani"],
-    total: 15.99,
-    status: "delivered",
-    time: "25 min ago",
-  },
-]
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-}
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-}
+import { useGetDashboardStatsQuery, useGetRecentOrdersQuery } from "@/store/dashboardApi"
+import { formatCurrency, formatOrderDate } from "@/lib/utils"
+import { useAppSelector } from "@/store/hooks"
 
 export default function AdminDashboard() {
+  const token = useAppSelector((state) => state.auth.token)
+  
+  const { data: statsData, isLoading: statsLoading } = useGetDashboardStatsQuery(undefined, {
+    pollingInterval: 60000, // Poll every minute for stats
+    skip: !token
+  })
+  const { data: recentOrders = [], isLoading: ordersLoading } = useGetRecentOrdersQuery(undefined, {
+    pollingInterval: 30000, // Poll every 30 seconds for recent orders
+    skip: !token
+  })
+
+  const stats = [
+    {
+      title: "Total Orders Today",
+      value: statsLoading ? "..." : (statsData?.totalOrdersToday || 0).toString(),
+      change: statsLoading ? "..." : `${statsData?.totalOrdersComparePercentage && statsData.totalOrdersComparePercentage > 0 ? '+' : ''}${statsData?.totalOrdersComparePercentage || 0}%`,
+      icon: ShoppingBag,
+      color: "text-blue-600",
+      changeLabel: "from yesterday"
+    },
+    {
+      title: "Revenue Today",
+      value: statsLoading ? "..." : formatCurrency(statsData?.revenueToday || 0),
+      change: statsLoading ? "..." : `${statsData?.revenueComparePercentage && statsData.revenueComparePercentage > 0 ? '+' : ''}${statsData?.revenueComparePercentage || 0}%`,
+      icon: DollarSign,
+      color: "text-green-600",
+      changeLabel: "from yesterday"
+    },
+    {
+      title: "Active Orders",
+      value: statsLoading ? "..." : (statsData?.activeOrdersCount || 0).toString(),
+      change: "Live",
+      icon: Clock,
+      color: "text-orange-600",
+      changeLabel: ""
+    },
+    {
+      title: "Menu Items",
+      value: statsLoading ? "..." : (statsData?.totalMenuItems || 0).toString(),
+      change: "Active",
+      icon: ChefHat,
+      color: "text-purple-600",
+      changeLabel: ""
+    },
+  ]
+
+  const quickActions = [
+    {
+      title: "Offers & Specials",
+      description: "Manage special offers and today's specials",
+      href: "/admin/offers",
+      icon: Plus,
+      color: "bg-zayka-600 hover:bg-zayka-700",
+    },
+    {
+      title: "Manage Orders",
+      description: "View and manage live orders",
+      href: "/admin/orders",
+      icon: ShoppingBag,
+      color: "bg-blue-600 hover:bg-blue-700",
+    },
+    {
+      title: "Menu Management",
+      description: "Edit existing menu items",
+      href: "/admin/menu",
+      icon: ChefHat,
+      color: "bg-green-600 hover:bg-green-700",
+    },
+    {
+      title: "Category Management",
+      description: "Manage menu categories",
+      href: "/admin/categories",
+      icon: ShoppingBag,
+      color: "bg-purple-600 hover:bg-purple-700",
+    },
+  ]
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  }
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'secondary'
+      case 'preparing': return 'default'
+      case 'ready': return 'default'
+      case 'out-for-delivery': return 'default'
+      case 'delivered': return 'default'
+      case 'cancelled': return 'destructive'
+      default: return 'outline'
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -130,6 +126,12 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground mt-2">Welcome back! Here's what's happening at Zayka today.</p>
         </div>
         <div className="flex gap-2 mt-4 md:mt-0">
+          <Button asChild>
+            <Link href="/staff/orders">
+              <ShoppingBag className="h-4 w-4 mr-2" />
+               View Live Orders
+            </Link>
+          </Button>
           <Button asChild>
             <Link href="/admin/menu">
               <Plus className="h-4 w-4 mr-2" />
@@ -164,7 +166,9 @@ export default function AdminDashboard() {
                   <CardContent>
                     <div className="text-2xl font-bold">{stat.value}</div>
                     <p className="text-xs text-muted-foreground">
-                      <span className="text-green-600">{stat.change}</span> from yesterday
+                      <span className={stat.change.includes('+') ? "text-green-600" : "text-muted-foreground"}>
+                        {stat.change}
+                      </span> {stat.changeLabel}
                     </p>
                   </CardContent>
                 </Card>
@@ -199,49 +203,56 @@ export default function AdminDashboard() {
             {/* Recent Orders */}
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Recent Orders</CardTitle>
-                    <CardDescription>Latest customer orders</CardDescription>
-                  </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/admin/orders">View All</Link>
-                  </Button>
+                <CardHeader>
+                  <CardTitle>Recent Orders</CardTitle>
+                  <CardDescription>Latest 3 orders from customers</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium">{order.id}</span>
-                          <Badge
-                            variant={
-                              order.status === "delivered" ? "default" : order.status === "ready" ? "secondary" : "outline"
-                            }
-                          >
-                            {order.status}
-                          </Badge>
+                <CardContent>
+                  <div className="space-y-4">
+                    {ordersLoading ? (
+                       <div className="text-center py-4 text-sm text-muted-foreground">Loading recent orders...</div>
+                    ) : recentOrders.length === 0 ? (
+                       <div className="text-center py-4 text-sm text-muted-foreground">No recent orders found.</div>
+                    ) : (
+                      recentOrders.length > 0 && recentOrders?.map((order) => (
+                        <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                          <div>
+                            <div className="font-medium">{order.customerName || "Walk-in Customer"}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {order.itemsSummary.join(", ")}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge variant={getStatusColor(order.status) as any}>
+                              {order.status}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                               {(() => {
+                                  // Simplified time check
+                                  const date = new Date(order.createdAt);
+                                  const now = new Date();
+                                  const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000);
+                                  
+                                  if (diffMins < 60) return `${diffMins} min ago`;
+                                  if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hr ago`;
+                                  return date.toLocaleDateString();
+                                })()}
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{order.customer}</p>
-                        <p className="text-xs text-muted-foreground">{order.items.join(", ")}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">₹{order.total.toFixed(2)}</p>
-                        <p className="text-xs text-muted-foreground">{order.time}</p>
-                      </div>
-                    </div>
-                  ))}
+                      ))
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
           </div>
         </TabsContent>
 
-        <TabsContent value="orders" className="space-y-4">
+        <TabsContent value="orders">
           <OrderManagement />
         </TabsContent>
-
-        <TabsContent value="staff" className="space-y-4">
+        <TabsContent value="staff">
           <StaffManagement />
         </TabsContent>
       </Tabs>

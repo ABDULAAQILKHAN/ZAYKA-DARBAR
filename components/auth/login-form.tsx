@@ -90,11 +90,11 @@ export default function LoginForm() {
             // Get user role and redirect accordingly
             const role = data.session.user.user_metadata?.role || 'customer'
             toast.success('Logged in successfully!')
-
+            console.log('User role:', role)
             if (role === 'admin') {
               router.push('/admin')
             } else if (role === 'staff') {
-              router.push('/staff/orders')
+              router.push('/staff/menu')
             } else {
               router.push('/menu')
             }
@@ -209,7 +209,7 @@ export default function LoginForm() {
         } else if (userRole === 'admin') {
           router.push("/admin")
         } else if (userRole === 'staff') {
-          router.push("/admin/orders")
+          router.push("/staff/menu")
         } else if (userRole === 'receptionist') {
           router.push("/receptionist/orders")
         } else {

@@ -43,7 +43,7 @@ const getNavItems = (userRole?: string, isAuthenticated?: boolean) => {
     // Let's clear base items to be safe and specific for staff
     baseItems.length = 0;
     baseItems.push({ name: "Menu Management", href: "/staff/menu" })
-    baseItems.push({ name: "Order Management", href: "/staff/orders" })
+    baseItems.push({ name: "Order Status", href: "/staff/orders" })
   }
 
 

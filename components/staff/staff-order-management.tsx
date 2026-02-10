@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { formatCurrency } from "@/lib/utils"
+import { useGetAllOrdersQuery } from "@/store/ordersApi"
+import { formatCurrency, formatOrderDate } from "@/lib/utils"
 import {
     Table,
     TableBody,
@@ -14,34 +15,6 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 
-// Demo Data
-const demoOrders = [
-    {
-        id: "ORD-DEMO-001",
-        customer: "John Doe",
-        items: ["Butter Chicken", "Garlic Naan (2)"],
-        total: 22.97,
-        status: "preparing",
-        time: "10:30 AM",
-    },
-    {
-        id: "ORD-DEMO-002",
-        customer: "Jane Smith",
-        items: ["Paneer Tikka", "Dal Makhani"],
-        total: 19.98,
-        status: "ready",
-        time: "10:15 AM",
-    },
-    {
-        id: "ORD-DEMO-003",
-        customer: "Mike Johnson",
-        items: ["Chicken Biryani"],
-        total: 15.99,
-        status: "pending",
-        time: "10:45 AM",
-    },
-]
-
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     pending: "outline",
     preparing: "secondary",
@@ -52,17 +25,31 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 }
 
 export default function StaffOrderManagement() {
+    const { data: orders = [], isLoading } = useGetAllOrdersQuery()
     const [searchQuery, setSearchQuery] = useState("")
 
-    const filteredOrders = demoOrders.filter((order) =>
+    const filteredOrders = orders.filter((order) =>
         order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.customer.toLowerCase().includes(searchQuery.toLowerCase())
+        (order.customerName && order.customerName.toLowerCase().includes(searchQuery.toLowerCase()))
     )
+
+    // const handleStatusChange = async (orderId: string, newStatus: string) => {
+    //     try {
+    //         await updateStatus({ id: orderId, status: newStatus }).unwrap()
+    //         toast.success(`Order status updated to ${newStatus}`)
+    //     } catch (error) {
+    //         toast.error("Failed to update order status")
+    //     }
+    // }
+
+    if (isLoading) {
+        return <div className="p-4">Loading orders...</div>
+    }
 
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold tracking-tight">Order Management (Demo)</h2>
+                <h2 className="text-2xl font-bold tracking-tight">Order Status</h2>
             </div>
 
             <div className="relative max-w-sm">
@@ -85,12 +72,13 @@ export default function StaffOrderManagement() {
                             <TableHead>Total</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Time</TableHead>
+                            {/* <TableHead>Actions</TableHead> */}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredOrders.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
+                                <TableCell colSpan={7} className="h-24 text-center">
                                     No orders found.
                                 </TableCell>
                             </TableRow>
@@ -98,15 +86,51 @@ export default function StaffOrderManagement() {
                             filteredOrders.map((order) => (
                                 <TableRow key={order.id}>
                                     <TableCell className="font-medium">{order.id}</TableCell>
-                                    <TableCell>{order.customer}</TableCell>
-                                    <TableCell>{order.items.join(", ")}</TableCell>
+                                    <TableCell>{order.customerName || "Walk-in Customer"}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-1">
+                                            {order.items.map((item, i) => (
+                                                <span key={i} className="text-xs">
+                                                    {item.quantity}x {item.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>{formatCurrency(order.total)}</TableCell>
                                     <TableCell>
                                         <Badge variant={statusColors[order.status] || "outline"}>
                                             {order.status}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{order.time}</TableCell>
+                                    <TableCell>
+                                        {(() => {
+                                            const { date, time } = formatOrderDate(order.createdAt)
+                                            return (
+                                                <div className="flex flex-col text-xs text-muted-foreground">
+                                                    <span>{date}</span>
+                                                    <span>{time}</span>
+                                                </div>
+                                            )
+                                        })()}
+                                    </TableCell>
+                                    {/* <TableCell>
+                                        <Select
+                                            defaultValue={order.status}
+                                            onValueChange={(value) => handleStatusChange(order.id, value)}
+                                        >
+                                            <SelectTrigger className="w-[130px] h-8">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="pending">Pending</SelectItem>
+                                                <SelectItem value="preparing">Preparing</SelectItem>
+                                                <SelectItem value="ready">Ready</SelectItem>
+                                                <SelectItem value="out-for-delivery">Out for Delivery</SelectItem>
+                                                <SelectItem value="delivered">Delivered</SelectItem>
+                                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableCell> */}
                                 </TableRow>
                             ))
                         )}
