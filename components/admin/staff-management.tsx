@@ -187,7 +187,7 @@ export default function StaffManagement() {
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle>Employee Management</CardTitle>
-                    <CardDescription>
+                    <CardDescription className="mt-2">
                         Manage staff and receptionists.
                     </CardDescription>
                 </div>
