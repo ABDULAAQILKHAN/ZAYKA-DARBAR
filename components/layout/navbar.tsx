@@ -148,7 +148,7 @@ export default function Navbar() {
                 href={item.href}
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-zayka-600 dark:hover:text-zayka-400",
-                  pathname === item.href ? "text-zayka-600 dark:text-zayka-400" : "text-foreground/70",
+                  pathname === item.href ? "text-zayka-600 dark:text-zayka-600" : "text-foreground/70",
                 )}
               >
                 {item.name}
