@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Search, Clock, CheckCircle, Truck, Package } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,7 +21,18 @@ const statusSteps = [
 
 export default function OrderTracking() {
   const [searchQuery, setSearchQuery] = useState("")
-  const { data: orders = [], isLoading } = useGetMyOrdersQuery()
+  const [pollingInterval, setPollingInterval] = useState(0)
+  
+  const { data: orders = [], isLoading } = useGetMyOrdersQuery(undefined, {
+    pollingInterval,
+  })
+
+  useEffect(() => {
+    const hasActiveOrders = orders.some(
+      (order) => order.status !== "delivered" && order.status !== "cancelled"
+    )
+    setPollingInterval(hasActiveOrders ? 120000 : 0) // Poll every 2 minutes if there are active orders
+  }, [orders])
 
   const activeOrders = orders.filter((order) => order.status !== "delivered" && order.status !== "cancelled")
   const orderHistory = orders.filter((order) => order.status === "delivered" || order.status === "cancelled")
