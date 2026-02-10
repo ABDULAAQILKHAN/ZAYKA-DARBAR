@@ -124,7 +124,7 @@ export default function Navbar() {
       )}
     >
       <div className="container mx-auto px-4 md:px-6">
-        <div className="flex h-16 items-center justify-between">
+        <div className="relative flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <motion.span
               className="text-2xl font-bold text-zayka-600 dark:text-zayka-600"
@@ -141,14 +141,14 @@ export default function Navbar() {
             )}
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-6">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-zayka-600 dark:hover:text-zayka-400",
-                  pathname === item.href ? "text-zayka-600 dark:text-zayka-400" : "text-foreground/70",
+                  pathname === item.href ? "text-zayka-600 dark:text-zayka-600" : "text-foreground/70",
                 )}
               >
                 {item.name}

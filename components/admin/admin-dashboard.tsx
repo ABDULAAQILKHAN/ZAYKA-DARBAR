@@ -126,12 +126,12 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground mt-2">Welcome back! Here's what's happening at Zayka today.</p>
         </div>
         <div className="flex gap-2 mt-4 md:mt-0">
-          <Button asChild>
+          {/* <Button asChild>
             <Link href="/staff/orders">
               <ShoppingBag className="h-4 w-4 mr-2" />
                View Live Orders
             </Link>
-          </Button>
+          </Button> */}
           <Button asChild>
             <Link href="/admin/menu">
               <Plus className="h-4 w-4 mr-2" />

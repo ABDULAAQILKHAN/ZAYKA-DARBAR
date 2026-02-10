@@ -19,10 +19,10 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Filter } from "lucide-react"
 import { toast } from "sonner"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     pending: "outline",
@@ -39,12 +39,6 @@ export default function OrderManagement() {
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("all")
 
-    const filteredOrders = orders.filter((order) => {
-        const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesStatus = statusFilter === "all" || order.status === statusFilter
-        return matchesSearch && matchesStatus
-    })
-
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         try {
             await updateStatus({ id: orderId, status: newStatus }).unwrap()
@@ -53,6 +47,17 @@ export default function OrderManagement() {
             toast.error("Failed to update order status")
         }
     }
+
+    const activeOrdersRaw = orders.filter(o => ['pending', 'preparing', 'ready', 'out-for-delivery'].includes(o.status))
+    const historyOrdersRaw = orders.filter(o => ['delivered', 'cancelled'].includes(o.status))
+
+    const filterOrders = (list: Order[]) => list.filter(order => {
+        const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (order.customerName && order.customerName.toLowerCase().includes(searchQuery.toLowerCase()))
+        
+        const matchesStatus = statusFilter === "all" || order.status === statusFilter
+        return matchesSearch && matchesStatus
+    })
 
     if (isLoading) {
         return <div>Loading orders...</div>
@@ -91,79 +96,106 @@ export default function OrderManagement() {
                 </Select>
             </div>
 
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
+            <Tabs defaultValue="active" className="w-full">
+                <TabsList className="grid w-[400px] grid-cols-2">
+                    <TabsTrigger value="active">Active Orders</TabsTrigger>
+                    <TabsTrigger value="history">Order History</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="active">
+                    <OrdersTable 
+                        orders={filterOrders(activeOrdersRaw)} 
+                        handleStatusChange={handleStatusChange} 
+                    />
+                </TabsContent>
+                
+                <TabsContent value="history">
+                    <OrdersTable 
+                        orders={filterOrders(historyOrdersRaw)} 
+                        handleStatusChange={handleStatusChange} 
+                    />
+                </TabsContent>
+            </Tabs>
+        </div>
+    )
+}
+
+function OrdersTable({ orders, handleStatusChange }: { orders: Order[], handleStatusChange: (id: string, status: string) => void }) {
+    return (
+        <div className="rounded-md border mt-4">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {orders.length === 0 ? (
                         <TableRow>
-                            <TableHead>Order ID</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Items</TableHead>
-                            <TableHead>Total</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Actions</TableHead>
+                            <TableCell colSpan={7} className="h-24 text-center">
+                                No orders found.
+                            </TableCell>
                         </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredOrders.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
-                                    No orders found.
+                    ) : (
+                        orders.map((order) => (
+                            <TableRow key={order.id}>
+                                <TableCell className="font-medium">{order.id}</TableCell>
+                                <TableCell>{order.customerName || "Guest"}</TableCell>
+                                <TableCell>
+                                    {(() => {
+                                        const { date, time } = formatOrderDate(order.createdAt)
+                                        return (
+                                            <div className="flex flex-col">
+                                                <span>{date}</span>
+                                                <span className="text-xs text-muted-foreground">{time}</span>
+                                            </div>
+                                        )
+                                    })()}
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col gap-1">
+                                        {order.items.map((item, i) => (
+                                            <span key={i} className="text-sm">
+                                                {item.quantity}x {item.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </TableCell>
+                                <TableCell>{formatCurrency(order.total)}</TableCell>
+                                <TableCell>
+                                    <Badge variant={statusColors[order.status] || "outline"}>
+                                        {order.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Select
+                                        defaultValue={order.status}
+                                        onValueChange={(value) => handleStatusChange(order.id, value)}
+                                    >
+                                        <SelectTrigger className="w-[140px]">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="pending">Pending</SelectItem>
+                                            <SelectItem value="preparing">Preparing</SelectItem>
+                                            <SelectItem value="ready">Ready</SelectItem>
+                                            <SelectItem value="out-for-delivery">Out for Delivery</SelectItem>
+                                            <SelectItem value="delivered">Delivered</SelectItem>
+                                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </TableCell>
                             </TableRow>
-                        ) : (
-                            filteredOrders.map((order) => (
-                                <TableRow key={order.id}>
-                                    <TableCell className="font-medium">{order.id}</TableCell>
-                                    <TableCell>
-                                        {(() => {
-                                            const { date, time } = formatOrderDate(order.createdAt)
-                                            return (
-                                                <div className="flex flex-col">
-                                                    <span>{date}</span>
-                                                    <span className="text-xs text-muted-foreground">{time}</span>
-                                                </div>
-                                            )
-                                        })()}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col gap-1">
-                                            {order.items.map((item, i) => (
-                                                <span key={i} className="text-sm">
-                                                    {item.quantity}x {item.name}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>{formatCurrency(order.total)}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={statusColors[order.status] || "outline"}>
-                                            {order.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Select
-                                            defaultValue={order.status}
-                                            onValueChange={(value) => handleStatusChange(order.id, value)}
-                                        >
-                                            <SelectTrigger className="w-[140px]">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="pending">Pending</SelectItem>
-                                                <SelectItem value="preparing">Preparing</SelectItem>
-                                                <SelectItem value="ready">Ready</SelectItem>
-                                                <SelectItem value="out-for-delivery">Out for Delivery</SelectItem>
-                                                <SelectItem value="delivered">Delivered</SelectItem>
-                                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
         </div>
     )
 }

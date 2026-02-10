@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   useGetSpecialOffersQuery,
@@ -113,6 +114,14 @@ export default function OffersPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <Button variant="ghost" asChild className="pl-0 hover:bg-transparent">
+          <Link href="/admin" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
+      </div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Offers & Specials Management</h1>
         <p className="text-muted-foreground mt-2">Manage special offers and today's special items</p>
