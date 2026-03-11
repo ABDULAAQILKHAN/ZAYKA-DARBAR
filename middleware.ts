@@ -57,13 +57,15 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/staff/menu', request.url))
     } else if (userRole === 'manager') {
       return NextResponse.redirect(new URL('/manager/orders', request.url))
+    } else if (userRole === 'rider') {
+      return NextResponse.redirect(new URL('/rider', request.url))
     } else {
       return NextResponse.redirect(new URL('/menu', request.url))
     }
   }
 
   // Define route groups
-  const protectedRoutes = ['/orders', '/admin', '/staff', '/manager', '/checkout', '/cart', '/profile']
+  const protectedRoutes = ['/orders', '/admin', '/staff', '/manager', '/rider', '/checkout', '/cart', '/profile']
   const adminRoutes = ['/admin/dashboard', '/admin/users', '/admin/settings'] // More specific admin routes
   // const staffRoutes = ['/admin', '/orders', '/menu'] // Staff can access these
   const authRoutes = ['/auth/login', '/auth/signup']
@@ -73,6 +75,7 @@ export async function middleware(request: NextRequest) {
     if (userRole === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
     if (userRole === 'staff') return NextResponse.redirect(new URL('/staff/menu', request.url)) // Staff goes to staff menu
     if (userRole === 'manager') return NextResponse.redirect(new URL('/manager/orders', request.url))
+    if (userRole === 'rider') return NextResponse.redirect(new URL('/rider', request.url))
     return NextResponse.redirect(new URL('/menu', request.url))
   }
 
@@ -101,6 +104,18 @@ export async function middleware(request: NextRequest) {
     // Manager routes access
     if (pathname.startsWith('/manager') && userRole !== 'admin' && userRole !== 'manager') {
       return NextResponse.redirect(new URL('/menu', request.url))
+    }
+
+    // Rider routes access
+    if (pathname.startsWith('/rider') && userRole !== 'admin' && userRole !== 'rider') {
+      return NextResponse.redirect(new URL('/menu', request.url))
+    }
+
+    // Prevent riders from accessing customer-only routes (cart, checkout, orders)
+    if (userRole === 'rider') {
+      if (pathname.startsWith('/cart') || pathname.startsWith('/checkout') || pathname === '/orders') {
+        return NextResponse.redirect(new URL('/rider', request.url))
+      }
     }
   }
 

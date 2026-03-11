@@ -113,6 +113,63 @@ export const ordersApi = createApi({
             transformResponse: (response: ApiResponse<Order>) => response.data,
             invalidatesTags: (result, error, id) => [{ type: 'Order', id }, { type: 'Order', id: 'MY_LIST' }],
         }),
+
+        // =====================
+        // Rider Endpoints
+        // =====================
+
+        // Get orders ready for pickup (Rider)
+        getReadyOrders: builder.query<Order[], void>({
+            query: () => 'orders/rider/ready',
+            transformResponse: (response: ApiResponse<Order[]>) => response.data,
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: 'Order' as const, id })),
+                        { type: 'Order', id: 'READY_LIST' },
+                    ]
+                    : [{ type: 'Order', id: 'READY_LIST' }],
+        }),
+
+        // Get orders out for delivery (Rider)
+        getMyDeliveries: builder.query<Order[], void>({
+            query: () => 'orders/rider/my-deliveries',
+            transformResponse: (response: ApiResponse<Order[]>) => response.data,
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: 'Order' as const, id })),
+                        { type: 'Order', id: 'DELIVERY_LIST' },
+                    ]
+                    : [{ type: 'Order', id: 'DELIVERY_LIST' }],
+        }),
+
+        // Mark order as picked up / out for delivery (Rider)
+        pickupOrder: builder.mutation<Order, string>({
+            query: (id) => ({
+                url: `orders/rider/${id}/pickup`,
+                method: 'PATCH',
+            }),
+            transformResponse: (response: ApiResponse<Order>) => response.data,
+            invalidatesTags: (result, error, id) => [
+                { type: 'Order', id },
+                { type: 'Order', id: 'READY_LIST' },
+                { type: 'Order', id: 'DELIVERY_LIST' },
+            ],
+        }),
+
+        // Mark order as delivered (Rider)
+        deliverOrder: builder.mutation<Order, string>({
+            query: (id) => ({
+                url: `orders/rider/${id}/deliver`,
+                method: 'PATCH',
+            }),
+            transformResponse: (response: ApiResponse<Order>) => response.data,
+            invalidatesTags: (result, error, id) => [
+                { type: 'Order', id },
+                { type: 'Order', id: 'DELIVERY_LIST' },
+            ],
+        }),
     }),
 })
 
@@ -123,4 +180,8 @@ export const {
     useCreateOrderMutation,
     useUpdateOrderStatusMutation,
     useCancelOrderMutation,
+    useGetReadyOrdersQuery,
+    useGetMyDeliveriesQuery,
+    usePickupOrderMutation,
+    useDeliverOrderMutation,
 } = ordersApi
