@@ -53,7 +53,7 @@ import { Badge } from "@/components/ui/badge"
 const formSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
-    role: z.enum(["staff", "receptionist"]),
+    role: z.enum(["staff", "manager"]),
 })
 
 interface StaffUser {
@@ -188,7 +188,7 @@ export default function StaffManagement() {
                 <div>
                     <CardTitle>Employee Management</CardTitle>
                     <CardDescription className="mt-2">
-                        Manage staff and receptionists.
+                        Manage staff and managers.
                     </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function StaffManagement() {
                                                     </FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="staff">Staff</SelectItem>
-                                                        <SelectItem value="receptionist">Receptionist</SelectItem>
+                                                        <SelectItem value="manager">Manager</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />

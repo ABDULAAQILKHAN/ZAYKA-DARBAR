@@ -55,15 +55,15 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/admin', request.url))
     } else if (userRole === 'staff') {
       return NextResponse.redirect(new URL('/staff/menu', request.url))
-    } else if (userRole === 'receptionist') {
-      return NextResponse.redirect(new URL('/receptionist/orders', request.url))
+    } else if (userRole === 'manager') {
+      return NextResponse.redirect(new URL('/manager/orders', request.url))
     } else {
       return NextResponse.redirect(new URL('/menu', request.url))
     }
   }
 
   // Define route groups
-  const protectedRoutes = ['/orders', '/admin', '/staff', '/receptionist', '/checkout', '/cart', '/profile']
+  const protectedRoutes = ['/orders', '/admin', '/staff', '/manager', '/checkout', '/cart', '/profile']
   const adminRoutes = ['/admin/dashboard', '/admin/users', '/admin/settings'] // More specific admin routes
   // const staffRoutes = ['/admin', '/orders', '/menu'] // Staff can access these
   const authRoutes = ['/auth/login', '/auth/signup']
@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
   if (user && authRoutes.some(route => pathname.startsWith(route))) {
     if (userRole === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
     if (userRole === 'staff') return NextResponse.redirect(new URL('/staff/menu', request.url)) // Staff goes to staff menu
-    if (userRole === 'receptionist') return NextResponse.redirect(new URL('/receptionist/orders', request.url))
+    if (userRole === 'manager') return NextResponse.redirect(new URL('/manager/orders', request.url))
     return NextResponse.redirect(new URL('/menu', request.url))
   }
 
@@ -98,8 +98,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/menu', request.url))
     }
 
-    // Receptionist routes access
-    if (pathname.startsWith('/receptionist') && userRole !== 'admin' && userRole !== 'receptionist') {
+    // Manager routes access
+    if (pathname.startsWith('/manager') && userRole !== 'admin' && userRole !== 'manager') {
       return NextResponse.redirect(new URL('/menu', request.url))
     }
   }

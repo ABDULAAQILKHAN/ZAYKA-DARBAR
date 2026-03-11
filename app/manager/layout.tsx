@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function ReceptionistLayout({
+export default function ManagerLayout({
     children,
 }: {
     children: React.ReactNode

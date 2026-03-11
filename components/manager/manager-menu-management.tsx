@@ -17,7 +17,7 @@ import { Search } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 
-export default function ReceptionistMenuManagement() {
+export default function ManagerMenuManagement() {
     const { data: menuItems = [], isLoading } = useGetMenuItemsQuery({})
     const [toggleAvailability] = useToggleMenuItemAvailabilityMutation()
     const [searchQuery, setSearchQuery] = useState("")

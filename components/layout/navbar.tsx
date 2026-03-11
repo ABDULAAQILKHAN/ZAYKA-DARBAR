@@ -48,11 +48,11 @@ const getNavItems = (userRole?: string, isAuthenticated?: boolean) => {
 
 
 
-  // Receptionist Routes
-  if (userRole === 'receptionist') {
+  // Manager Routes
+  if (userRole === 'manager') {
     baseItems.length = 0;
-    baseItems.push({ name: "Menu Visibility", href: "/receptionist/menu" })
-    baseItems.push({ name: "Order Management", href: "/receptionist/orders" })
+    baseItems.push({ name: "Menu Visibility", href: "/manager/menu" })
+    baseItems.push({ name: "Order Management", href: "/manager/orders" })
   }
 
   // Only show Admin if user is admin (hidden for now)
@@ -134,7 +134,7 @@ export default function Navbar() {
             >
               Zayka
             </motion.span>
-            {user && (profile?.role || user?.user_metadata?.role) && ['admin', 'staff', 'receptionist'].includes(profile?.role || user?.user_metadata?.role) && (
+            {user && (profile?.role || user?.user_metadata?.role) && ['admin', 'staff', 'manager'].includes(profile?.role || user?.user_metadata?.role) && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-zayka-100 text-zayka-700 dark:bg-zayka-900 dark:text-zayka-300 capitalize">
                 {profile?.role || user?.user_metadata?.role}
               </span>
