@@ -210,8 +210,10 @@ export default function LoginForm() {
           router.push("/admin")
         } else if (userRole === 'staff') {
           router.push("/staff/menu")
-        } else if (userRole === 'receptionist') {
-          router.push("/receptionist/orders")
+        } else if (userRole === 'manager') {
+          router.push("/manager/orders")
+        } else if (userRole === 'rider') {
+          router.push("/rider")
         } else {
           // Default fallback
           router.push("/")

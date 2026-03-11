@@ -1,12 +1,12 @@
 import React from 'react'
 
-export default function ReceptionistLayout({
+export default function RiderLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
     return (
-        <div className="container mx-auto py-8 px-4 md:px-6">
+        <div className="min-h-screen bg-background">
             {children}
         </div>
     )

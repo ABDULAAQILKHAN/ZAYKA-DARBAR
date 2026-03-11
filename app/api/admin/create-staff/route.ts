@@ -57,7 +57,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        if (role !== 'staff' && role !== 'receptionist') {
+        if (role !== 'staff' && role !== 'manager' && role !== 'rider') {
             return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
         }
 

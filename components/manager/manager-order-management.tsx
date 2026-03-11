@@ -33,7 +33,7 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
     cancelled: "destructive",
 }
 
-export default function ReceptionistOrderManagement() {
+export default function ManagerOrderManagement() {
     // Polling every 15 seconds
     const { data: orders = [], isLoading, isFetching } = useGetAllOrdersQuery(undefined, {
         pollingInterval: 15000,

@@ -59,9 +59,9 @@ export async function GET() {
             return NextResponse.json({ error: error.message }, { status: 400 })
         }
 
-        // Filter only staff and receptionist users
+        // Filter only staff, manager, and rider users
         const staffUsers = data.users.filter(
-            (u) => u.user_metadata?.role === 'staff' || u.user_metadata?.role === 'receptionist'
+            (u) => u.user_metadata?.role === 'staff' || u.user_metadata?.role === 'manager' || u.user_metadata?.role === 'rider'
         ).map((u) => {
 
             // Access banned_until through unknown cast (exists in API but not in types)
